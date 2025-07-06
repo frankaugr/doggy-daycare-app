@@ -8,13 +8,32 @@ interface DailyChecklistProps {
   dogs: Dog[];
 }
 
-const checklistItems = [
-  'Medication given',
-  'Bathroom break',
-  'Exercise/Play time', 
-  'Behavior normal',
-  'Social interaction',
-  'Water available'
+const checklistCategories = {
+  examination: [
+    'Eyes',
+    'Ears',
+    'Nose',
+    'Mouth',
+    'Limbs',
+    'Paws',
+    'Fur/skin',
+    'Bottom'
+  ],
+  behavior: [
+    'Behaviour',
+    'Rest',
+    'Pooping',
+    'Peeing',
+    'Grooming',
+    'Play',
+    'Human Interaction',
+    'Water Intake'
+  ]
+};
+
+const getAllChecklistItems = () => [
+  ...checklistCategories.examination,
+  ...checklistCategories.behavior
 ];
 
 export default function DailyChecklist({ dogs }: DailyChecklistProps) {
@@ -88,7 +107,7 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
   const checkAllItems = (dogId: string) => {
     if (!dayData) return;
 
-    const allCheckedList = checklistItems.reduce((acc, item) => {
+    const allCheckedList = getAllChecklistItems().reduce((acc, item) => {
       acc[item] = true;
       return acc;
     }, {} as Record<string, boolean>);
@@ -166,7 +185,7 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             value={amTemp}
             onChange={(e) => setAmTemp(e.target.value)}
             onBlur={updateTemperature}
-            placeholder="°F"
+            placeholder="°C"
             className="input temp-input"
           />
         </label>
@@ -178,7 +197,7 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             value={pmTemp}
             onChange={(e) => setPmTemp(e.target.value)}
             onBlur={updateTemperature}
-            placeholder="°F"
+            placeholder="°C"
             className="input temp-input"
           />
         </label>
@@ -205,25 +224,52 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
                   </button>
                 </div>
                 <div className="checklist">
-                  {checklistItems.map(item => (
-                    <div key={item} className="checklist-item">
-                      <label>{item}:</label>
-                      <div className="checklist-buttons">
-                        <button
-                          className={`check-btn ${record.checklist?.[item] === true ? 'active-good' : ''}`}
-                          onClick={() => updateChecklist(dog.id, item, true)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className={`check-btn ${record.checklist?.[item] === false ? 'active-bad' : ''}`}
-                          onClick={() => updateChecklist(dog.id, item, false)}
-                        >
-                          ✗
-                        </button>
-                      </div>
+                  <div className="checklist-columns">
+                    <div className="checklist-column">
+                      <h4>Examination</h4>
+                      {checklistCategories.examination.map(item => (
+                        <div key={item} className="checklist-item">
+                          <label>{item}:</label>
+                          <div className="checklist-buttons">
+                            <button
+                              className={`check-btn ${record.checklist?.[item] === true ? 'active-good' : ''}`}
+                              onClick={() => updateChecklist(dog.id, item, true)}
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className={`check-btn ${record.checklist?.[item] === false ? 'active-bad' : ''}`}
+                              onClick={() => updateChecklist(dog.id, item, false)}
+                            >
+                              ✗
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    <div className="checklist-column">
+                      <h4>Behavior & Activities</h4>
+                      {checklistCategories.behavior.map(item => (
+                        <div key={item} className="checklist-item">
+                          <label>{item}:</label>
+                          <div className="checklist-buttons">
+                            <button
+                              className={`check-btn ${record.checklist?.[item] === true ? 'active-good' : ''}`}
+                              onClick={() => updateChecklist(dog.id, item, true)}
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className={`check-btn ${record.checklist?.[item] === false ? 'active-bad' : ''}`}
+                              onClick={() => updateChecklist(dog.id, item, false)}
+                            >
+                              ✗
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="dog-times">
