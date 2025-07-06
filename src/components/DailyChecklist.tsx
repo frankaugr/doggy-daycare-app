@@ -85,6 +85,18 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
     updateDailyRecord(dogId, 'checklist', updatedChecklist);
   };
 
+  const checkAllItems = (dogId: string) => {
+    if (!dayData) return;
+
+    const currentRecord = dayData.records[dogId] || {};
+    const allCheckedList = checklistItems.reduce((acc, item) => {
+      acc[item] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+
+    updateDailyRecord(dogId, 'checklist', allCheckedList);
+  };
+
   const updateTemperature = async () => {
     try {
       await invoke('update_temperature', { 
@@ -184,7 +196,15 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             
             return (
               <div key={dog.id} className="dog-card">
-                <h3>{dog.name}</h3>
+                <div className="dog-header">
+                  <h3>{dog.name}</h3>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => checkAllItems(dog.id)}
+                  >
+                    Check All
+                  </button>
+                </div>
                 <div className="checklist">
                   {checklistItems.map(item => (
                     <div key={item} className="checklist-item">

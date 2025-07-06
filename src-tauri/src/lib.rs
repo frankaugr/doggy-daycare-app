@@ -81,48 +81,79 @@ impl Default for AppData {
 }
 
 fn get_app_data_path() -> Result<PathBuf, String> {
-    let home_dir = std::env::var("HOME").map_err(|_| "Failed to get home directory")?;
+    let home_dir = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .map_err(|_| "Failed to get home directory")?;
     let mut path = PathBuf::from(home_dir);
+    
+    // Use a more cross-platform approach
+    #[cfg(target_os = "windows")]
+    path.push("AppData\\Roaming\\doggy-daycare");
+    
+    #[cfg(not(target_os = "windows"))]
     path.push(".local/share/doggy-daycare");
     
+    println!("App data directory: {:?}", path);
+    
     if !path.exists() {
+        println!("Creating directory: {:?}", path);
         fs::create_dir_all(&path).map_err(|e| format!("Failed to create app data directory: {}", e))?;
     }
     
     path.push("data.json");
+    println!("Data file path: {:?}", path);
     Ok(path)
 }
 
 fn load_app_data() -> Result<AppData, String> {
     let path = get_app_data_path()?;
     
+    println!("Loading app data from: {:?}", path);
+    
     if !path.exists() {
+        println!("Data file doesn't exist, creating default");
         let default_data = AppData::default();
         save_app_data(&default_data)?;
         return Ok(default_data);
     }
     
     let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read data file: {}", e))?;
+        .map_err(|e| {
+            println!("Failed to read data file: {}", e);
+            format!("Failed to read data file: {}", e)
+        })?;
     
     if content.trim().is_empty() {
+        println!("Data file is empty, creating default");
         let default_data = AppData::default();
         save_app_data(&default_data)?;
         return Ok(default_data);
     }
     
+    println!("Parsing data file content");
     serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse data file: {}", e))
+        .map_err(|e| {
+            println!("Failed to parse data file: {}", e);
+            format!("Failed to parse data file: {}", e)
+        })
 }
 
 fn save_app_data(data: &AppData) -> Result<(), String> {
     let path = get_app_data_path()?;
     
+    println!("Saving app data to: {:?}", path);
+    
     let content = serde_json::to_string_pretty(data)
-        .map_err(|e| format!("Failed to serialize data: {}", e))?;
+        .map_err(|e| {
+            println!("Failed to serialize data: {}", e);
+            format!("Failed to serialize data: {}", e)
+        })?;
     
     fs::write(&path, content)
-        .map_err(|e| format!("Failed to write data file: {}", e))
+        .map_err(|e| {
+            println!("Failed to write data file: {}", e);
+            format!("Failed to write data file: {}", e)
+        })
 }
 
 #[tauri::command]
@@ -244,7 +275,9 @@ fn update_temperature(date: String, am_temp: Option<String>, pm_temp: Option<Str
 
 #[tauri::command]
 fn get_settings() -> Result<Settings, String> {
+    println!("Getting settings...");
     let data = load_app_data()?;
+    println!("Settings loaded successfully");
     Ok(data.settings)
 }
 
