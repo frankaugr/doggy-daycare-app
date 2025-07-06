@@ -1,4 +1,3 @@
-import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Mail, FileText, Syringe, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Dog, Settings } from '../App';
