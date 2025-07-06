@@ -45,6 +45,10 @@ export interface Settings {
     consent_form: string;
     vaccine_reminder: string;
   };
+  email_subjects: {
+    consent_form: string;
+    vaccine_reminder: string;
+  };
 }
 
 type Tab = 'daily' | 'management' | 'compliance' | 'settings';

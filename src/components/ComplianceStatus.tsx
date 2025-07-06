@@ -41,9 +41,16 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
         .replace(/{ownerEmail}/g, dog.email)
         .replace(/{currentDate}/g, new Date().toLocaleDateString());
 
+      const subject = settings.email_subjects?.consent_form
+        ?.replace(/{dogName}/g, dog.name)
+        ?.replace(/{ownerName}/g, dog.owner)
+        ?.replace(/{ownerEmail}/g, dog.email)
+        ?.replace(/{currentDate}/g, new Date().toLocaleDateString())
+        || `Monthly Consent Form Required - ${dog.name}`;
+
       await invoke('open_email', {
         to: dog.email,
-        subject: `Monthly Consent Form Required - ${dog.name}`,
+        subject: subject,
         body: template
       });
     } catch (error) {
@@ -70,9 +77,17 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
         .replace(/{vaccineType}/g, 'annual vaccination')
         .replace(/{expirationDate}/g, expirationDate ? expirationDate.toLocaleDateString() : 'Not available');
 
+      const subject = settings.email_subjects?.vaccine_reminder
+        ?.replace(/{dogName}/g, dog.name)
+        ?.replace(/{ownerName}/g, dog.owner)
+        ?.replace(/{ownerEmail}/g, dog.email)
+        ?.replace(/{vaccineType}/g, 'annual vaccination')
+        ?.replace(/{expirationDate}/g, expirationDate ? expirationDate.toLocaleDateString() : 'Not available')
+        || `Vaccine Record Update Required - ${dog.name}`;
+
       await invoke('open_email', {
         to: dog.email,
-        subject: `Vaccine Record Update Required - ${dog.name}`,
+        subject: subject,
         body: template
       });
     } catch (error) {

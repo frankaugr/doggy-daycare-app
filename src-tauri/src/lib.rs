@@ -50,10 +50,17 @@ pub struct EmailTemplate {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EmailSubject {
+    pub consent_form: String,
+    pub vaccine_reminder: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub business_name: String,
     pub auto_backup: bool,
     pub email_templates: EmailTemplate,
+    pub email_subjects: EmailSubject,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,6 +81,10 @@ impl Default for AppData {
                 email_templates: EmailTemplate {
                     consent_form: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName} needs their monthly consent form completed for continued daycare services.\n\nPlease complete and return the consent form at your earliest convenience. If you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing our daycare services for {dogName}.\n\nBest regards,\nThe Doggy Daycare Team\n\nDate: {currentDate}".to_string(),
                     vaccine_reminder: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName}'s {vaccineType} vaccination is due to expire on {expirationDate}.\n\nTo ensure {dogName} can continue to enjoy our daycare services, please schedule an appointment with your veterinarian to update their vaccination records.\n\nPlease provide us with the updated vaccination certificate once completed.\n\nThank you for keeping {dogName} healthy and safe.\n\nBest regards,\nThe Doggy Daycare Team".to_string(),
+                },
+                email_subjects: EmailSubject {
+                    consent_form: "Monthly Consent Form Required - {dogName}".to_string(),
+                    vaccine_reminder: "Vaccine Record Update Required - {dogName}".to_string(),
                 },
             },
         }

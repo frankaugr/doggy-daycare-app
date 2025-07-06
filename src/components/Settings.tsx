@@ -32,6 +32,10 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
         email_templates: {
           consent_form: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName} needs their monthly consent form completed for continued daycare services.\n\nPlease complete and return the consent form at your earliest convenience. If you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing our daycare services for {dogName}.\n\nBest regards,\nThe Doggy Daycare Team\n\nDate: {currentDate}",
           vaccine_reminder: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName}'s {vaccineType} vaccination is due to expire on {expirationDate}.\n\nTo ensure {dogName} can continue to enjoy our daycare services, please schedule an appointment with your veterinarian to update their vaccination records.\n\nPlease provide us with the updated vaccination certificate once completed.\n\nThank you for keeping {dogName} healthy and safe.\n\nBest regards,\nThe Doggy Daycare Team"
+        },
+        email_subjects: {
+          consent_form: "Monthly Consent Form Required - {dogName}",
+          vaccine_reminder: "Vaccine Record Update Required - {dogName}"
         }
       });
     }
@@ -46,6 +50,29 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
             <h3>Email Templates</h3>
           </div>
           
+          <div className="form-group">
+            <label htmlFor="consent-subject">
+              Monthly Consent Form Subject
+            </label>
+            <input
+              id="consent-subject"
+              type="text"
+              className="input"
+              value={formData.email_subjects?.consent_form || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                email_subjects: {
+                  ...formData.email_subjects,
+                  consent_form: e.target.value
+                }
+              })}
+              placeholder="Monthly Consent Form Required - {dogName}"
+            />
+            <div className="template-help">
+              Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{currentDate}'}
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="consent-template">
               Monthly Consent Form Template
@@ -65,6 +92,29 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
             />
             <div className="template-help">
               Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{currentDate}'}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="vaccine-subject">
+              Vaccine Reminder Subject
+            </label>
+            <input
+              id="vaccine-subject"
+              type="text"
+              className="input"
+              value={formData.email_subjects?.vaccine_reminder || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                email_subjects: {
+                  ...formData.email_subjects,
+                  vaccine_reminder: e.target.value
+                }
+              })}
+              placeholder="Vaccine Record Update Required - {dogName}"
+            />
+            <div className="template-help">
+              Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{vaccineType}'}, {'{expirationDate}'}
             </div>
           </div>
 
