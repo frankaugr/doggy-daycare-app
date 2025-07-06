@@ -97,11 +97,19 @@ fn load_app_data() -> Result<AppData, String> {
     let path = get_app_data_path()?;
     
     if !path.exists() {
-        return Ok(AppData::default());
+        let default_data = AppData::default();
+        save_app_data(&default_data)?;
+        return Ok(default_data);
     }
     
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read data file: {}", e))?;
+    
+    if content.trim().is_empty() {
+        let default_data = AppData::default();
+        save_app_data(&default_data)?;
+        return Ok(default_data);
+    }
     
     serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse data file: {}", e))
