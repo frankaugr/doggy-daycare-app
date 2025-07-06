@@ -88,7 +88,6 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
   const checkAllItems = (dogId: string) => {
     if (!dayData) return;
 
-    const currentRecord = dayData.records[dogId] || {};
     const allCheckedList = checklistItems.reduce((acc, item) => {
       acc[item] = true;
       return acc;
