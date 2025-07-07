@@ -109,7 +109,7 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
       .replace(/{currentDate}/g, new Date().toLocaleDateString());
 
     const phoneNumber = dog.phone.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(template)}`;
+    const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encodeURIComponent(template)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -131,7 +131,7 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
       .replace(/{expirationDate}/g, expirationDate ? expirationDate.toLocaleDateString() : 'Not available');
 
     const phoneNumber = dog.phone.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(template)}`;
+    const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encodeURIComponent(template)}`;
     window.open(whatsappUrl, '_blank');
   };
 
