@@ -40,12 +40,17 @@ export interface DayData {
 
 export interface Settings {
   business_name: string;
+  business_phone: string;
   auto_backup: boolean;
   email_templates: {
     consent_form: string;
     vaccine_reminder: string;
   };
   email_subjects: {
+    consent_form: string;
+    vaccine_reminder: string;
+  };
+  whatsapp_templates: {
     consent_form: string;
     vaccine_reminder: string;
   };

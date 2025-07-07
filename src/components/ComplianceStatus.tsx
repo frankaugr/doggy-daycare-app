@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { Mail, FileText, Syringe, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Mail, FileText, Syringe, AlertTriangle, CheckCircle, MessageCircle } from 'lucide-react';
 import { Dog, Settings } from '../App';
 
 interface ComplianceStatusProps {
@@ -96,6 +96,45 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
     }
   };
 
+  const sendConsentWhatsApp = (dog: Dog) => {
+    if (!dog.phone || !settings || !settings.whatsapp_templates) {
+      alert('No phone number available for this dog owner or WhatsApp templates not configured.');
+      return;
+    }
+
+    const template = settings.whatsapp_templates.consent_form
+      .replace(/{dogName}/g, dog.name)
+      .replace(/{ownerName}/g, dog.owner)
+      .replace(/{ownerEmail}/g, dog.email)
+      .replace(/{currentDate}/g, new Date().toLocaleDateString());
+
+    const phoneNumber = dog.phone.replace(/[^0-9]/g, '');
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(template)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const sendVaccineWhatsApp = (dog: Dog) => {
+    if (!dog.phone || !settings || !settings.whatsapp_templates) {
+      alert('No phone number available for this dog owner or WhatsApp templates not configured.');
+      return;
+    }
+
+    const expirationDate = dog.vaccine_date 
+      ? new Date(new Date(dog.vaccine_date).getFullYear() + 1, new Date(dog.vaccine_date).getMonth(), new Date(dog.vaccine_date).getDate())
+      : null;
+
+    const template = settings.whatsapp_templates.vaccine_reminder
+      .replace(/{dogName}/g, dog.name)
+      .replace(/{ownerName}/g, dog.owner)
+      .replace(/{ownerEmail}/g, dog.email)
+      .replace(/{vaccineType}/g, 'annual vaccination')
+      .replace(/{expirationDate}/g, expirationDate ? expirationDate.toLocaleDateString() : 'Not available');
+
+    const phoneNumber = dog.phone.replace(/[^0-9]/g, '');
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(template)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const vaccineIssues = dogs.filter(dog => getVaccineStatus(dog) !== 'current');
   const consentIssues = dogs.filter(dog => getConsentStatus(dog) !== 'current');
 
@@ -158,7 +197,15 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
                     disabled={!dog.email}
                   >
                     <Mail size={16} />
-                    Send Reminder
+                    Email
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => sendConsentWhatsApp(dog)}
+                    disabled={!dog.phone}
+                  >
+                    <MessageCircle size={16} />
+                    WhatsApp
                   </button>
                 </div>
               </div>
@@ -196,7 +243,15 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
                     disabled={!dog.email}
                   >
                     <Mail size={16} />
-                    Send Reminder
+                    Email
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => sendVaccineWhatsApp(dog)}
+                    disabled={!dog.phone}
+                  >
+                    <MessageCircle size={16} />
+                    WhatsApp
                   </button>
                 </div>
               </div>

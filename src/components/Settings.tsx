@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, RotateCcw, Mail, Settings as SettingsIcon } from 'lucide-react';
+import { Save, RotateCcw, Mail, Settings as SettingsIcon, MessageCircle } from 'lucide-react';
 import { Settings as SettingsType } from '../App';
 
 interface SettingsProps {
@@ -36,6 +36,10 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
         email_subjects: {
           consent_form: "Monthly Consent Form Required - {dogName}",
           vaccine_reminder: "Vaccine Record Update Required - {dogName}"
+        },
+        whatsapp_templates: {
+          consent_form: "Hi {ownerName}! 🐕 This is a friendly reminder that {dogName} needs their monthly consent form completed for continued daycare services. Please complete it at your earliest convenience. Thanks!",
+          vaccine_reminder: "Hi {ownerName}! 🐕 Just a reminder that {dogName}'s {vaccineType} vaccination expires on {expirationDate}. Please update their vaccination records to continue daycare services. Thanks!"
         }
       });
     }
@@ -154,6 +158,57 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
 
         <div className="card">
           <div className="card-header">
+            <MessageCircle size={20} />
+            <h3>WhatsApp Templates</h3>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="whatsapp-consent-template">
+              Monthly Consent Form WhatsApp Template
+            </label>
+            <textarea
+              id="whatsapp-consent-template"
+              rows={6}
+              className="input"
+              value={formData.whatsapp_templates?.consent_form || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                whatsapp_templates: {
+                  ...formData.whatsapp_templates,
+                  consent_form: e.target.value
+                }
+              })}
+            />
+            <div className="template-help">
+              Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{currentDate}'}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="whatsapp-vaccine-template">
+              Vaccine Reminder WhatsApp Template
+            </label>
+            <textarea
+              id="whatsapp-vaccine-template"
+              rows={6}
+              className="input"
+              value={formData.whatsapp_templates?.vaccine_reminder || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                whatsapp_templates: {
+                  ...formData.whatsapp_templates,
+                  vaccine_reminder: e.target.value
+                }
+              })}
+            />
+            <div className="template-help">
+              Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{vaccineType}'}, {'{expirationDate}'}
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
             <SettingsIcon size={20} />
             <h3>General Settings</h3>
           </div>
@@ -170,6 +225,23 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
               onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
               placeholder="Your Doggy Daycare Name"
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="business-phone">
+              Business Phone Number
+            </label>
+            <input
+              id="business-phone"
+              type="tel"
+              className="input"
+              value={formData.business_phone || ''}
+              onChange={(e) => setFormData({ ...formData, business_phone: e.target.value })}
+              placeholder="+1234567890"
+            />
+            <div className="template-help">
+              Include country code (e.g., +1 for US/Canada)
+            </div>
           </div>
 
           <div className="form-group">

@@ -56,11 +56,32 @@ pub struct EmailSubject {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WhatsAppTemplate {
+    pub consent_form: String,
+    pub vaccine_reminder: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub business_name: String,
+    #[serde(default = "default_business_phone")]
+    pub business_phone: String,
     pub auto_backup: bool,
     pub email_templates: EmailTemplate,
     pub email_subjects: EmailSubject,
+    #[serde(default = "default_whatsapp_templates")]
+    pub whatsapp_templates: WhatsAppTemplate,
+}
+
+fn default_business_phone() -> String {
+    "".to_string()
+}
+
+fn default_whatsapp_templates() -> WhatsAppTemplate {
+    WhatsAppTemplate {
+        consent_form: "Hi {ownerName}! 🐕 This is a friendly reminder that {dogName} needs their monthly consent form completed for continued daycare services. Please complete it at your earliest convenience. Thanks!".to_string(),
+        vaccine_reminder: "Hi {ownerName}! 🐕 Just a reminder that {dogName}'s {vaccineType} vaccination expires on {expirationDate}. Please update their vaccination records to continue daycare services. Thanks!".to_string(),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -77,6 +98,7 @@ impl Default for AppData {
             daily_data: HashMap::new(),
             settings: Settings {
                 business_name: "Your Doggy Daycare".to_string(),
+                business_phone: "".to_string(),
                 auto_backup: true,
                 email_templates: EmailTemplate {
                     consent_form: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName} needs their monthly consent form completed for continued daycare services.\n\nPlease complete and return the consent form at your earliest convenience. If you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing our daycare services for {dogName}.\n\nBest regards,\nThe Doggy Daycare Team\n\nDate: {currentDate}".to_string(),
@@ -86,23 +108,61 @@ impl Default for AppData {
                     consent_form: "Monthly Consent Form Required - {dogName}".to_string(),
                     vaccine_reminder: "Vaccine Record Update Required - {dogName}".to_string(),
                 },
+                whatsapp_templates: default_whatsapp_templates(),
             },
         }
     }
 }
 
+fn is_development_mode() -> bool {
+    // Check if we're in a development environment
+    // This can be detected by checking for WSL, or by checking if we're in the src-tauri directory
+    std::env::var("WSL_DISTRO_NAME").is_ok() || 
+    std::env::var("CARGO_PKG_NAME").is_ok() ||
+    std::env::current_dir()
+        .map(|dir| dir.to_string_lossy().contains("src-tauri"))
+        .unwrap_or(false)
+}
+
 fn get_app_data_path() -> Result<PathBuf, String> {
-    let home_dir = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
-        .map_err(|_| "Failed to get home directory")?;
-    let mut path = PathBuf::from(home_dir);
+    let is_dev = is_development_mode();
+    println!("Running in {} mode", if is_dev { "development" } else { "production" });
     
-    // Use a more cross-platform approach
-    #[cfg(target_os = "windows")]
-    path.push("AppData\\Roaming\\doggy-daycare");
+    let mut path = if is_dev {
+        // Development mode: store in current project directory or user's home
+        if let Ok(current_dir) = std::env::current_dir() {
+            // If we're in src-tauri, go up one level to the project root
+            if current_dir.file_name().map_or(false, |name| name == "src-tauri") {
+                current_dir.parent().unwrap_or(&current_dir).to_path_buf()
+            } else {
+                current_dir
+            }
+        } else {
+            // Fallback to home directory
+            let home_dir = std::env::var("HOME")
+                .or_else(|_| std::env::var("USERPROFILE"))
+                .map_err(|_| "Failed to get home directory")?;
+            PathBuf::from(home_dir)
+        }
+    } else {
+        // Production mode: use appropriate OS-specific directories
+        let home_dir = std::env::var("HOME")
+            .or_else(|_| std::env::var("USERPROFILE"))
+            .map_err(|_| "Failed to get home directory")?;
+        PathBuf::from(home_dir)
+    };
     
-    #[cfg(not(target_os = "windows"))]
-    path.push(".local/share/doggy-daycare");
+    // Add the app-specific subdirectory
+    if is_dev {
+        path.push("doggy-daycare-dev-data");
+    } else {
+        // Use OS-specific app data directories
+        #[cfg(target_os = "windows")]
+        path.push("AppData\\Roaming\\doggy-daycare");
+        
+        #[cfg(not(target_os = "windows"))]
+        path.push(".local/share/doggy-daycare");
+    }
     
     println!("App data directory: {:?}", path);
     
@@ -142,11 +202,68 @@ fn load_app_data() -> Result<AppData, String> {
     }
     
     println!("Parsing data file content");
-    serde_json::from_str(&content)
-        .map_err(|e| {
-            println!("Failed to parse data file: {}", e);
-            format!("Failed to parse data file: {}", e)
-        })
+    
+    // Try to parse normally first
+    match serde_json::from_str::<AppData>(&content) {
+        Ok(data) => {
+            println!("Successfully parsed data file");
+            Ok(data)
+        },
+        Err(e) => {
+            println!("Failed to parse data file, attempting migration: {}", e);
+            
+            // Try to parse as a generic JSON value to perform migration
+            match serde_json::from_str::<serde_json::Value>(&content) {
+                Ok(mut json_data) => {
+                    println!("Successfully parsed as JSON, performing migration");
+                    
+                    // Migrate settings if needed
+                    if let Some(settings) = json_data.get_mut("settings") {
+                        migrate_settings(settings);
+                    }
+                    
+                    // Try to parse the migrated data
+                    match serde_json::from_value::<AppData>(json_data) {
+                        Ok(migrated_data) => {
+                            println!("Successfully migrated data, saving updated version");
+                            // Save the migrated data to update the file
+                            save_app_data(&migrated_data)?;
+                            Ok(migrated_data)
+                        },
+                        Err(migration_error) => {
+                            println!("Migration failed: {}", migration_error);
+                            Err(format!("Failed to migrate data: {}", migration_error))
+                        }
+                    }
+                },
+                Err(json_error) => {
+                    println!("Failed to parse as JSON: {}", json_error);
+                    Err(format!("Failed to parse data file: {}", e))
+                }
+            }
+        }
+    }
+}
+
+fn migrate_settings(settings: &mut serde_json::Value) {
+    println!("Migrating settings");
+    
+    // Add business_phone if missing
+    if !settings.get("business_phone").is_some() {
+        println!("Adding missing business_phone field");
+        settings["business_phone"] = serde_json::Value::String("".to_string());
+    }
+    
+    // Add whatsapp_templates if missing
+    if !settings.get("whatsapp_templates").is_some() {
+        println!("Adding missing whatsapp_templates field");
+        settings["whatsapp_templates"] = serde_json::json!({
+            "consent_form": "Hi {ownerName}! 🐕 This is a friendly reminder that {dogName} needs their monthly consent form completed for continued daycare services. Please complete it at your earliest convenience. Thanks!",
+            "vaccine_reminder": "Hi {ownerName}! 🐕 Just a reminder that {dogName}'s {vaccineType} vaccination expires on {expirationDate}. Please update their vaccination records to continue daycare services. Thanks!"
+        });
+    }
+    
+    println!("Settings migration completed");
 }
 
 fn save_app_data(data: &AppData) -> Result<(), String> {
@@ -287,6 +404,7 @@ fn update_temperature(date: String, am_temp: Option<String>, pm_temp: Option<Str
 #[tauri::command]
 fn get_settings() -> Result<Settings, String> {
     println!("Getting settings...");
+    println!("Environment detection: {}", if is_development_mode() { "Development" } else { "Production" });
     let data = load_app_data()?;
     println!("Settings loaded successfully");
     Ok(data.settings)
