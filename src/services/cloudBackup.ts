@@ -27,7 +27,7 @@ class CloudBackupService {
   private syncInterval?: number;
 
   constructor() {
-    this.startConnectivityMonitoring();
+    this.startConnectivityMonitoring().catch(console.error);
   }
 
   public getConnectionStatus(): ConnectionStatus {
@@ -70,8 +70,27 @@ class CloudBackupService {
     }
   }
 
-  private startConnectivityMonitoring() {
-    this.checkConnectivity();
+  private async startConnectivityMonitoring() {
+    await this.checkConnectivity();
+    
+    // Initialize sync interval and perform initial sync if enabled
+    const config = await this.getCloudBackupConfig();
+    if (config.enabled) {
+      // Set up periodic sync interval
+      if (config.sync_interval_minutes > 0) {
+        this.syncInterval = window.setInterval(() => {
+          this.performAutoSync();
+        }, config.sync_interval_minutes * 60 * 1000);
+      }
+      
+      // If we're online and have a cloud directory, perform initial sync
+      if (this.connectionStatus.online && config.cloud_directory) {
+        setTimeout(() => {
+          this.performAutoSync();
+        }, 2000); // Wait 2 seconds after startup to let the app fully load
+      }
+    }
+    
     this.checkInterval = window.setInterval(() => {
       this.checkConnectivity();
     }, 30000);
