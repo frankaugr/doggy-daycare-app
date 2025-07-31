@@ -62,11 +62,32 @@ pub struct WhatsAppTemplate {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CloudBackupConfig {
+    pub enabled: bool,
+    pub cloud_directory: String,
+    pub max_backups: u32,
+    pub sync_interval_minutes: u32,
+}
+
+impl Default for CloudBackupConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            cloud_directory: String::new(),
+            max_backups: 100,
+            sync_interval_minutes: 30,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub business_name: String,
     #[serde(default = "default_business_phone")]
     pub business_phone: String,
     pub auto_backup: bool,
+    #[serde(default)]
+    pub cloud_backup: Option<CloudBackupConfig>,
     pub email_templates: EmailTemplate,
     pub email_subjects: EmailSubject,
     #[serde(default = "default_whatsapp_templates")]
@@ -100,6 +121,7 @@ impl Default for AppData {
                 business_name: "Your Doggy Daycare".to_string(),
                 business_phone: "".to_string(),
                 auto_backup: true,
+                cloud_backup: None,
                 email_templates: EmailTemplate {
                     consent_form: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName} needs their monthly consent form completed for continued daycare services.\n\nPlease complete and return the consent form at your earliest convenience. If you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing our daycare services for {dogName}.\n\nBest regards,\nThe Doggy Daycare Team\n\nDate: {currentDate}".to_string(),
                     vaccine_reminder: "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName}'s {vaccineType} vaccination is due to expire on {expirationDate}.\n\nTo ensure {dogName} can continue to enjoy our daycare services, please schedule an appointment with your veterinarian to update their vaccination records.\n\nPlease provide us with the updated vaccination certificate once completed.\n\nThank you for keeping {dogName} healthy and safe.\n\nBest regards,\nThe Doggy Daycare Team".to_string(),
@@ -450,6 +472,94 @@ fn import_data(json_data: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn get_cloud_backup_config() -> Result<CloudBackupConfig, String> {
+    let data = load_app_data()?;
+    Ok(data.settings.cloud_backup.unwrap_or_default())
+}
+
+#[tauri::command]
+fn update_cloud_backup_config(config: CloudBackupConfig) -> Result<(), String> {
+    let mut data = load_app_data()?;
+    data.settings.cloud_backup = Some(config);
+    save_app_data(&data)?;
+    Ok(())
+}
+
+#[tauri::command]
+fn save_cloud_backup(cloud_directory: String, filename: String, data: String) -> Result<(), String> {
+    let cloud_path = PathBuf::from(&cloud_directory);
+    
+    if !cloud_path.exists() {
+        return Err(format!("Cloud directory does not exist: {}", cloud_directory));
+    }
+    
+    if !cloud_path.is_dir() {
+        return Err(format!("Cloud path is not a directory: {}", cloud_directory));
+    }
+    
+    let backup_path = cloud_path.join(&filename);
+    
+    fs::write(&backup_path, data)
+        .map_err(|e| format!("Failed to write backup to {}: {}", backup_path.display(), e))?;
+    
+    println!("Successfully saved backup to: {}", backup_path.display());
+    Ok(())
+}
+
+#[tauri::command]
+fn cleanup_old_backups(cloud_directory: String, max_backups: u32) -> Result<(), String> {
+    let cloud_path = PathBuf::from(&cloud_directory);
+    
+    if !cloud_path.exists() || !cloud_path.is_dir() {
+        return Ok(()); // Nothing to clean up
+    }
+    
+    // Get all backup files
+    let mut backup_files = Vec::new();
+    
+    match fs::read_dir(&cloud_path) {
+        Ok(entries) => {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if let Some(filename) = path.file_name() {
+                        if let Some(filename_str) = filename.to_str() {
+                            if filename_str.starts_with("doggy-daycare-backup-") && filename_str.ends_with(".json") {
+                                if let Ok(metadata) = entry.metadata() {
+                                    if let Ok(modified) = metadata.modified() {
+                                        backup_files.push((path, modified));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            return Err(format!("Failed to read cloud directory: {}", e));
+        }
+    }
+    
+    // Sort by modification time (newest first)
+    backup_files.sort_by(|a, b| b.1.cmp(&a.1));
+    
+    // Remove files beyond the limit
+    if backup_files.len() > max_backups as usize {
+        let files_to_remove = &backup_files[max_backups as usize..];
+        
+        for (file_path, _) in files_to_remove {
+            match fs::remove_file(file_path) {
+                Ok(_) => println!("Removed old backup: {}", file_path.display()),
+                Err(e) => println!("Failed to remove old backup {}: {}", file_path.display(), e),
+            }
+        }
+    }
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -468,7 +578,11 @@ pub fn run() {
             update_settings,
             open_email,
             export_data,
-            import_data
+            import_data,
+            get_cloud_backup_config,
+            update_cloud_backup_config,
+            save_cloud_backup,
+            cleanup_old_backups
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

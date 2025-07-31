@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, RotateCcw, Mail, Settings as SettingsIcon, MessageCircle } from 'lucide-react';
+import { Save, RotateCcw, Mail, Settings as SettingsIcon, MessageCircle, Cloud, FolderOpen } from 'lucide-react';
 import { Settings as SettingsType } from '../App';
 
 interface SettingsProps {
@@ -8,7 +8,15 @@ interface SettingsProps {
 }
 
 export default function Settings({ settings, onUpdateSettings }: SettingsProps) {
-  const [formData, setFormData] = useState(settings);
+  const [formData, setFormData] = useState({
+    ...settings,
+    cloud_backup: settings.cloud_backup || {
+      enabled: false,
+      cloud_directory: '',
+      max_backups: 100,
+      sync_interval_minutes: 30
+    }
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,6 +213,109 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
               Available variables: {'{dogName}'}, {'{ownerName}'}, {'{ownerEmail}'}, {'{vaccineType}'}, {'{expirationDate}'}
             </div>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <Cloud size={20} />
+            <h3>Cloud Backup Settings</h3>
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.cloud_backup?.enabled || false}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  cloud_backup: {
+                    ...formData.cloud_backup!,
+                    enabled: e.target.checked
+                  }
+                })}
+              />
+              <span>Enable automatic cloud backups</span>
+            </label>
+            <div className="template-help">
+              When connected to the internet, automatically backup data to your configured cloud directory
+            </div>
+          </div>
+
+          {formData.cloud_backup?.enabled && (
+            <>
+              <div className="form-group">
+                <label htmlFor="cloud-directory">
+                  <FolderOpen size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                  Cloud Directory Path
+                </label>
+                <input
+                  id="cloud-directory"
+                  type="text"
+                  className="input"
+                  value={formData.cloud_backup.cloud_directory}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    cloud_backup: {
+                      ...formData.cloud_backup!,
+                      cloud_directory: e.target.value
+                    }
+                  })}
+                  placeholder="/path/to/your/cloud/folder (e.g., /Users/you/Dropbox/DoggyDaycare)"
+                />
+                <div className="template-help">
+                  Path to your cloud synced folder (Dropbox, Google Drive, OneDrive, etc.)
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="max-backups">
+                  Maximum Backup Files
+                </label>
+                <input
+                  id="max-backups"
+                  type="number"
+                  min="10"
+                  max="200"
+                  className="input"
+                  value={formData.cloud_backup.max_backups}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    cloud_backup: {
+                      ...formData.cloud_backup!,
+                      max_backups: parseInt(e.target.value) || 100
+                    }
+                  })}
+                />
+                <div className="template-help">
+                  Number of backup files to keep before overwriting oldest (10-200)
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sync-interval">
+                  Auto-Sync Interval (minutes)
+                </label>
+                <input
+                  id="sync-interval"
+                  type="number"
+                  min="5"
+                  max="480"
+                  className="input"
+                  value={formData.cloud_backup.sync_interval_minutes}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    cloud_backup: {
+                      ...formData.cloud_backup!,
+                      sync_interval_minutes: parseInt(e.target.value) || 30
+                    }
+                  })}
+                />
+                <div className="template-help">
+                  How often to automatically sync when online (5-480 minutes)
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="card">

@@ -25,9 +25,20 @@ body {
 /* Header */
 .header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header-left {
+  display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 2rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
 }
 
 .header h1 {
@@ -659,4 +670,134 @@ body {
   .dog-times {
     grid-template-columns: 1fr;
   }
+}
+
+/* Connection Status */
+.connection-status-container {
+  position: relative;
+  display: inline-block;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.connection-status:hover {
+  background-color: #f9fafb;
+}
+
+.connection-status.offline {
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+.connection-status.online {
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+.connection-status.syncing {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.connection-status.success {
+  color: #22c55e;
+  border-color: #22c55e;
+  background-color: #f0fdf4;
+}
+
+.connection-status.error {
+  color: #ef4444;
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.status-icon {
+  flex-shrink: 0;
+}
+
+.status-icon.offline {
+  color: #6b7280;
+}
+
+.status-icon.online {
+  color: #22c55e;
+}
+
+.status-icon.syncing {
+  color: #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+.status-icon.success {
+  color: #22c55e;
+}
+
+.status-icon.error {
+  color: #ef4444;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.connection-details {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+  min-width: 250px;
+  border: 1px solid #e5e7eb;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.error-message {
+  flex-direction: column;
+  align-items: flex-start;
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

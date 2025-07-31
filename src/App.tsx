@@ -6,6 +6,8 @@ import DailyChecklist from './components/DailyChecklist';
 import DogManagement from './components/DogManagement';
 import ComplianceStatus from './components/ComplianceStatus';
 import Settings from './components/Settings';
+import ConnectionStatus from './components/ConnectionStatus';
+import { cloudBackupService } from './services/cloudBackup';
 import './App.css';
 
 export interface Dog {
@@ -42,6 +44,12 @@ export interface Settings {
   business_name: string;
   business_phone: string;
   auto_backup: boolean;
+  cloud_backup?: {
+    enabled: boolean;
+    cloud_directory: string;
+    max_backups: number;
+    sync_interval_minutes: number;
+  };
   email_templates: {
     consent_form: string;
     vaccine_reminder: string;
@@ -66,6 +74,10 @@ function App() {
   useEffect(() => {
     loadDogs();
     loadSettings();
+    
+    return () => {
+      cloudBackupService.stopConnectivityMonitoring();
+    };
   }, []);
 
   const loadDogs = async () => {
@@ -128,6 +140,10 @@ function App() {
     try {
       await invoke('update_settings', { settings: newSettings });
       setSettings(newSettings);
+      
+      if (newSettings.cloud_backup) {
+        await cloudBackupService.updateCloudBackupConfig(newSettings.cloud_backup);
+      }
     } catch (error) {
       console.error('Failed to update settings:', error);
       throw error;
@@ -198,8 +214,13 @@ function App() {
     <div className="app">
       <div className="container">
         <header className="header">
-          <Heart className="header-icon" size={32} />
-          <h1>{settings?.business_name || 'Doggy Daycare Manager'}</h1>
+          <div className="header-left">
+            <Heart className="header-icon" size={32} />
+            <h1>{settings?.business_name || 'Doggy Daycare Manager'}</h1>
+          </div>
+          <div className="header-right">
+            <ConnectionStatus />
+          </div>
         </header>
 
         <nav className="tabs">
