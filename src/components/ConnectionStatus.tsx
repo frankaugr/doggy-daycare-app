@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Wifi, WifiOff, Cloud, CloudOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wifi, WifiOff, Cloud, AlertCircle, CheckCircle } from 'lucide-react';
 import { cloudBackupService, ConnectionStatus as ConnectionStatusType } from '../services/cloudBackup';
 
 export default function ConnectionStatus() {

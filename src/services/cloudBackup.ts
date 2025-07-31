@@ -50,7 +50,7 @@ class CloudBackupService {
 
   private async checkInternetConnection(): Promise<boolean> {
     try {
-      const response = await fetch('https://www.google.com/generate_204', {
+      await fetch('https://www.google.com/generate_204', {
         method: 'HEAD',
         mode: 'no-cors',
         cache: 'no-cache'
@@ -58,7 +58,7 @@ class CloudBackupService {
       return true;
     } catch {
       try {
-        const response = await fetch('https://httpbin.org/status/200', {
+        await fetch('https://httpbin.org/status/200', {
           method: 'HEAD',
           mode: 'no-cors',
           cache: 'no-cache'
