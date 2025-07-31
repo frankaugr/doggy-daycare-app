@@ -2,14 +2,10 @@
 
 A comprehensive desktop application for managing your doggy daycare business. Keep track of daily attendance, dog records, compliance status, and automatically backup your data to the cloud.
 
-![Doggy Daycare Manager](./app-icon.png)
-
 ## 📥 Download
 
 ### Latest Release
-- **Windows**: [Download .exe installer](https://github.com/frankaugr/doggy-daycare-app/releases/latest/download/doggy-daycare-app_setup.exe)
-- **macOS**: [Download .dmg installer](https://github.com/frankaugr/doggy-daycare-app/releases/latest/download/doggy-daycare-app_macos.dmg)
-- **Linux**: [Download .AppImage](https://github.com/frankaugr/doggy-daycare-app/releases/latest/download/doggy-daycare-app_linux.AppImage)
+- **Windows**: [Download .exe installer](https://github.com/frankaugr/doggy-daycare-app/releases/download/v0.1.0/Doggy.Daycare.Manager_0.1.0_x64-setup.exe)
 
 > **Note**: If no releases are available yet, you can build the app from source using the instructions in the Development section below.
 
@@ -19,7 +15,6 @@ A comprehensive desktop application for managing your doggy daycare business. Ke
 - 🐾 **Dog Registration** - Store owner contact info, vaccination records, and consent forms
 - 📊 **Compliance Monitoring** - Automatic alerts for expired vaccinations and missing consent forms
 - ☁️ **Cloud Backup** - Automatic backup to your cloud storage (Dropbox, Google Drive, OneDrive)
-- 🌐 **Internet Status** - Real-time connectivity monitoring with sync status
 - 📧 **Email Integration** - Quick access to email templates for owners
 - 📱 **WhatsApp Integration** - Send reminders via WhatsApp
 - 💾 **Data Import/Export** - Backup and restore your data manually
