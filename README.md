@@ -7,8 +7,6 @@ A comprehensive desktop application for managing your doggy daycare business. Ke
 ### Latest Release
 - **Windows**: [Download .exe installer](https://github.com/frankaugr/doggy-daycare-app/releases/download/v0.1.0/Doggy.Daycare.Manager_0.1.0_x64-setup.exe)
 
-> **Note**: If no releases are available yet, you can build the app from source using the instructions in the Development section below.
-
 ## ✨ Features
 
 - 📋 **Daily Checklist Management** - Track attendance, feeding times, and behavioral notes
