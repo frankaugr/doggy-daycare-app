@@ -1,4 +1,4 @@
-use tauri::{State, AppHandle};
+use tauri::{State, AppHandle, Manager};
 use anyhow::Result;
 
 use crate::database::{Database, DatabaseState};
@@ -215,8 +215,8 @@ pub async fn import_data(json_data: String, state: State<'_, DatabaseState>) -> 
     let import_data: ImportData = serde_json::from_str(&json_data)
         .map_err(|e| format!("Failed to parse import data: {}", e))?;
     
-    // Start transaction
-    let mut tx = db.begin_transaction().await.map_err(|e| e.to_string())?;
+    // TODO: Implement proper transaction support
+    // let mut tx = db.begin_transaction().await.map_err(|e| e.to_string())?;
     
     // Import settings if provided
     if let Some(settings) = import_data.settings {
@@ -249,7 +249,7 @@ pub async fn import_data(json_data: String, state: State<'_, DatabaseState>) -> 
     
     // TODO: Import daily records and day data
     
-    tx.commit().await.map_err(|e| e.to_string())?;
+    // tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
 }
 

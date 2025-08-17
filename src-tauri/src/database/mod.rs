@@ -1,10 +1,8 @@
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool, Row};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use anyhow::{Result, anyhow};
-use std::path::PathBuf;
-use tauri::AppHandle;
+use uuid::Uuid;
+use chrono::Utc;
+use tauri::{AppHandle, Manager};
 
 pub mod migrations;
 pub mod models;

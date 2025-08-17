@@ -44,8 +44,8 @@ export function useOfflineSync(): UseOfflineSyncReturn {
       // operations.forEach(op => {
       //   dispatch({ type: 'ADD_SYNC_OPERATION', payload: op });
       // });
-    } catch (error) {
-      console.error('Failed to load pending sync operations:', error);
+    } catch (_error) {
+      console.error('Failed to load pending sync operations:', _error);
     }
   };
 
@@ -62,7 +62,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     }
   }, [isOnline, dispatch]);
 
-  const persistSyncOperation = async (operation: SyncOperation) => {
+  const persistSyncOperation = async (_operation: SyncOperation) => {
     try {
       // TODO: Implement command to persist sync operation
       // await invoke('add_sync_operation', { operation });
@@ -168,7 +168,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     }
   };
 
-  const removeSyncOperation = async (operationId: string) => {
+  const removeSyncOperation = async (_operationId: string) => {
     try {
       // TODO: Implement command to remove sync operation
       // await invoke('remove_sync_operation', { operationId });

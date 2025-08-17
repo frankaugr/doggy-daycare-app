@@ -5,9 +5,7 @@ import type {
   AppAction, 
   Dog, 
   Settings, 
-  DayData, 
-  ConnectionStatus,
-  SyncOperation 
+  DayData
 } from '../types';
 
 // Initial state
@@ -140,7 +138,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const addDog = async (dogData: Omit<Dog, 'id' | 'created_at' | 'is_active'>) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const dogId = await invoke<string>('add_dog', {
+      await invoke<string>('add_dog', {
         name: dogData.name,
         owner: dogData.owner,
         phone: dogData.phone,

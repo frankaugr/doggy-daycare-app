@@ -1,4 +1,5 @@
-import type { ValidationResult, FormErrors, Dog } from '../types';
+import React from 'react';
+import type { ValidationResult, FormErrors } from '../types';
 
 // Validation rules
 export const ValidationRules = {
@@ -164,16 +165,16 @@ export function useValidation<T extends Record<string, any>>(
     // Validate field if it has been touched
     if (touched[fieldName]) {
       const error = validateField(fieldName, value);
-      setErrors(prev => ({ ...prev, [fieldName]: error }));
+      setErrors(prev => ({ ...prev, [fieldName]: error || undefined }));
     }
   }, [validateField, touched]);
 
-  const setTouched = React.useCallback((fieldName: string) => {
+  const setFieldTouched = React.useCallback((fieldName: string) => {
     setTouched(prev => ({ ...prev, [fieldName]: true }));
     
     // Validate when field is touched
     const error = validateField(fieldName, data[fieldName]);
-    setErrors(prev => ({ ...prev, [fieldName]: error }));
+    setErrors(prev => ({ ...prev, [fieldName]: error || undefined }));
   }, [validateField, data]);
 
   const reset = React.useCallback((newData?: T) => {
@@ -187,7 +188,7 @@ export function useValidation<T extends Record<string, any>>(
     errors,
     touched,
     setValue,
-    setTouched,
+    setTouched: setFieldTouched,
     validateForm,
     validateField,
     reset,
@@ -195,5 +196,3 @@ export function useValidation<T extends Record<string, any>>(
   };
 }
 
-// Import React for the hook
-import React from 'react';

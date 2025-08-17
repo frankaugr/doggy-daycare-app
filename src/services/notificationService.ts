@@ -103,9 +103,9 @@ export class NotificationService {
   static async sendWhatsApp(
     alert: ComplianceAlert,
     dog: Dog,
-    settings: Settings
+    _settings: Settings
   ): Promise<void> {
-    const message = this.generateWhatsAppContent(alert, dog, settings);
+    const message = this.generateWhatsAppContent(alert, dog, _settings);
     
     // Format phone number for WhatsApp (remove non-digits and ensure country code)
     let phoneNumber = dog.phone.replace(/\D/g, '');
@@ -130,11 +130,11 @@ export class NotificationService {
    */
   static async sendBulkNotifications(
     alerts: ComplianceAlert[],
-    dogs: Dog[],
-    settings: Settings,
+    _dogs: Dog[],
+    _settings: Settings,
     method: 'email' | 'whatsapp'
   ): Promise<{ successful: number; failed: number; errors: string[] }> {
-    const dogMap = new Map(dogs.map(dog => [dog.id, dog]));
+    const dogMap = new Map(_dogs.map(dog => [dog.id, dog]));
     let successful = 0;
     let failed = 0;
     const errors: string[] = [];
@@ -149,9 +149,9 @@ export class NotificationService {
 
       try {
         if (method === 'email') {
-          await this.sendEmail(alert, dog, settings);
+          await this.sendEmail(alert, dog, _settings);
         } else {
-          await this.sendWhatsApp(alert, dog, settings);
+          await this.sendWhatsApp(alert, dog, _settings);
         }
         successful++;
       } catch (error) {
@@ -168,8 +168,8 @@ export class NotificationService {
    */
   static scheduleReminders(
     alerts: ComplianceAlert[],
-    dogs: Dog[],
-    settings: Settings
+    _dogs: Dog[],
+    _settings: Settings
   ): void {
     // This is a placeholder for automatic reminder scheduling
     // In a real implementation, this would integrate with a background task scheduler
@@ -184,7 +184,7 @@ export class NotificationService {
     
     const upcomingAlerts = alerts.filter(alert => 
       alert.severity === 'medium' || 
-      (alert.severity === 'high' && !(alert.days_overdue || 0) > 0)
+      (alert.severity === 'high' && (alert.days_overdue || 0) <= 0)
     );
 
     // Immediate reminders for urgent items
@@ -203,14 +203,14 @@ export class NotificationService {
    */
   static generateReminderSummary(
     alerts: ComplianceAlert[],
-    dogs: Dog[]
+    _dogs: Dog[]
   ): {
     totalReminders: number;
     byType: Record<string, number>;
     bySeverity: Record<string, number>;
     upcomingDeadlines: Array<{ date: string; count: number }>;
   } {
-    const dogMap = new Map(dogs.map(dog => [dog.id, dog]));
+    // const _dogMap = new Map(_dogs.map(dog => [dog.id, dog]));
     
     const byType: Record<string, number> = {};
     const bySeverity: Record<string, number> = {};

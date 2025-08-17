@@ -1,10 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import type { Dog, SearchFilters, UseDogsReturn } from '../types';
 
 export function useDogs(): UseDogsReturn {
   const { state, loadDogs, addDog, updateDog, deleteDog } = useAppContext();
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
 
   const searchDogs = useCallback((filters: SearchFilters): Dog[] => {
     let filteredDogs = [...state.dogs];
