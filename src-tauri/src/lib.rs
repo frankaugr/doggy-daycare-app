@@ -6,6 +6,11 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use tauri_plugin_opener::OpenerExt;
 
+mod database;
+mod commands;
+
+use database::{Database, DatabaseState};
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Dog {
@@ -565,24 +570,46 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_sql::Builder::default().build())
+        .setup(|app| {
+            // Initialize database on startup
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = commands::initialize_database(app_handle.clone()).await {
+                    eprintln!("Failed to initialize database: {}", e);
+                }
+            });
+            
+            Ok(())
+        })
+        .manage(DatabaseState::default())
         .invoke_handler(tauri::generate_handler![
-            get_all_dogs,
-            add_dog,
-            update_dog,
-            delete_dog,
-            get_daily_data,
+            // New database-powered commands
+            commands::get_all_dogs,
+            commands::add_dog,
+            commands::update_dog,
+            commands::delete_dog,
+            commands::get_day_data,
+            commands::save_day_data,
+            commands::get_daily_record,
+            commands::save_daily_record,
+            commands::get_settings,
+            commands::update_settings,
+            commands::get_cloud_backup_config,
+            commands::update_cloud_backup_config,
+            commands::export_data,
+            commands::import_data,
+            commands::save_cloud_backup,
+            commands::cleanup_old_backups,
+            commands::initialize_database,
+            commands::get_database_status,
+            // Legacy commands for compatibility during transition
+            open_email,
+            // Deprecated - will be removed
+            get_daily_data as legacy_get_daily_data,
             update_attendance,
             update_daily_record,
-            update_temperature,
-            get_settings,
-            update_settings,
-            open_email,
-            export_data,
-            import_data,
-            get_cloud_backup_config,
-            update_cloud_backup_config,
-            save_cloud_backup,
-            cleanup_old_backups
+            update_temperature
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

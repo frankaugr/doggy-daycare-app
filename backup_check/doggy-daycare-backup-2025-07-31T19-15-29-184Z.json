@@ -1,0 +1,52 @@
+{
+  "dogs": [
+    {
+      "id": "41f161ad-7750-4249-a63c-23805ece10ba",
+      "name": "Coco",
+      "owner": "chrissie",
+      "phone": "07447495652",
+      "email": "frank.augr@gmail.com",
+      "breed": "",
+      "age": "",
+      "vaccine_date": null,
+      "consent_last_signed": null,
+      "created_at": "2025-07-07T07:37:48.307235251Z"
+    },
+    {
+      "id": "43435e61-4644-447a-b0a1-6327d3f32b33",
+      "name": "Gilgamesh",
+      "owner": "Frank",
+      "phone": "07447495652",
+      "email": "frank.augr@gmail.com",
+      "breed": "Maltese",
+      "age": "6months",
+      "vaccine_date": "2025-07-14",
+      "consent_last_signed": null,
+      "created_at": "2025-07-31T19:14:05.744450620Z"
+    }
+  ],
+  "daily_data": {},
+  "settings": {
+    "business_name": "Your Doggy Daycare",
+    "business_phone": "",
+    "auto_backup": true,
+    "cloud_backup": {
+      "enabled": true,
+      "cloud_directory": "/home/frank/CDD/doggy-daycare-app/backup_check",
+      "max_backups": 100,
+      "sync_interval_minutes": 30
+    },
+    "email_templates": {
+      "consent_form": "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName} needs their monthly consent form completed for continued daycare services.\n\nPlease complete and return the consent form at your earliest convenience. If you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing our daycare services for {dogName}.\n\nBest regards,\nThe Doggy Daycare Team\n\nDate: {currentDate}",
+      "vaccine_reminder": "Dear {ownerName},\n\nThis is a friendly reminder that your dog {dogName}'s {vaccineType} vaccination is due to expire on {expirationDate}.\n\nTo ensure {dogName} can continue to enjoy our daycare services, please schedule an appointment with your veterinarian to update their vaccination records.\n\nPlease provide us with the updated vaccination certificate once completed.\n\nThank you for keeping {dogName} healthy and safe.\n\nBest regards,\nThe Doggy Daycare Team"
+    },
+    "email_subjects": {
+      "consent_form": "Monthly Consent Form Required - {dogName}",
+      "vaccine_reminder": "Vaccine Record Update Required - {dogName}"
+    },
+    "whatsapp_templates": {
+      "consent_form": "Hi {ownerName}! 🐕 This is a friendly reminder that {dogName} needs their monthly consent form completed for continued daycare services. Please complete it at your earliest convenience. Thanks!",
+      "vaccine_reminder": "Hi {ownerName}! 🐕 Just a reminder that {dogName}'s {vaccineType} vaccination expires on {expirationDate}. Please update their vaccination records to continue daycare services. Thanks!"
+    }
+  }
+}
