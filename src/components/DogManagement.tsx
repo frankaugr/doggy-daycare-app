@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Download, Upload, Search } from 'lucide-react';
-import { Dog } from '../App';
+import { invoke } from '@tauri-apps/api/core';
+import { Dog, DogSchedule } from '../App';
 
 interface DogManagementProps {
   dogs: Dog[];
@@ -17,8 +18,30 @@ interface DogFormData {
   phone: string;
   email: string;
   breed: string;
-  age: string;
+  date_of_birth: string;
   vaccine_date: string;
+  schedule: DogSchedule;
+  household_id: string;
+  create_household: boolean;
+}
+
+function DogAgeDisplay({ dateOfBirth }: { dateOfBirth?: string }) {
+  const [age, setAge] = useState<string>('');
+
+  useEffect(() => {
+    if (dateOfBirth) {
+      invoke<string>('calculate_age', { dateOfBirth })
+        .then(setAge)
+        .catch((error) => {
+          console.error('Failed to calculate age:', error);
+          setAge('Unknown');
+        });
+    } else {
+      setAge('Not specified');
+    }
+  }, [dateOfBirth]);
+
+  return <span>{age}</span>;
 }
 
 export default function DogManagement({ 
@@ -38,8 +61,22 @@ export default function DogManagement({
     phone: '',
     email: '',
     breed: '',
-    age: '',
-    vaccine_date: ''
+    date_of_birth: '',
+    vaccine_date: '',
+    schedule: {
+      daycare_days: [],
+      training_days: [],
+      boarding_days: [],
+      daycare_drop_off: '',
+      daycare_pick_up: '',
+      training_drop_off: '',
+      training_pick_up: '',
+      start_date: '',
+      end_date: '',
+      active: true,
+    },
+    household_id: '',
+    create_household: false,
   });
 
   const filteredDogs = dogs.filter(dog =>
@@ -48,6 +85,26 @@ export default function DogManagement({
     dog.breed.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const groupDogsByHousehold = (dogs: Dog[]) => {
+    const households: Record<string, Dog[]> = {};
+    const individualDogs: Dog[] = [];
+
+    dogs.forEach(dog => {
+      if (dog.household_id) {
+        if (!households[dog.household_id]) {
+          households[dog.household_id] = [];
+        }
+        households[dog.household_id].push(dog);
+      } else {
+        individualDogs.push(dog);
+      }
+    });
+
+    return { households, individualDogs };
+  };
+
+  const { households, individualDogs } = groupDogsByHousehold(filteredDogs);
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -55,8 +112,22 @@ export default function DogManagement({
       phone: '',
       email: '',
       breed: '',
-      age: '',
-      vaccine_date: ''
+      date_of_birth: '',
+      vaccine_date: '',
+      schedule: {
+        daycare_days: [],
+        training_days: [],
+        boarding_days: [],
+        daycare_drop_off: '',
+        daycare_pick_up: '',
+        training_drop_off: '',
+        training_pick_up: '',
+        start_date: '',
+        end_date: '',
+        active: true,
+      },
+      household_id: '',
+      create_household: false,
     });
     setEditingDog(null);
     setShowForm(false);
@@ -66,16 +137,25 @@ export default function DogManagement({
     e.preventDefault();
     
     try {
+      let householdId = formData.household_id;
+      
+      // Generate new household ID if creating a new household
+      if (formData.create_household) {
+        householdId = crypto.randomUUID();
+      }
+      
       if (editingDog) {
         await onUpdateDog({
           ...editingDog,
           ...formData,
-          vaccine_date: formData.vaccine_date || undefined
+          vaccine_date: formData.vaccine_date || undefined,
+          household_id: householdId || undefined
         });
       } else {
         await onAddDog({
           ...formData,
-          vaccine_date: formData.vaccine_date || undefined
+          vaccine_date: formData.vaccine_date || undefined,
+          household_id: householdId || undefined
         });
       }
       resetForm();
@@ -91,8 +171,22 @@ export default function DogManagement({
       phone: dog.phone,
       email: dog.email,
       breed: dog.breed,
-      age: dog.age,
-      vaccine_date: dog.vaccine_date || ''
+      date_of_birth: dog.date_of_birth || '',
+      vaccine_date: dog.vaccine_date || '',
+      schedule: dog.schedule || {
+        daycare_days: [],
+        training_days: [],
+        boarding_days: [],
+        daycare_drop_off: '',
+        daycare_pick_up: '',
+        training_drop_off: '',
+        training_pick_up: '',
+        start_date: '',
+        end_date: '',
+        active: true,
+      },
+      household_id: dog.household_id || '',
+      create_household: false,
     });
     setEditingDog(dog);
     setShowForm(true);
@@ -216,11 +310,11 @@ export default function DogManagement({
                   />
                 </div>
                 <div className="form-group">
-                  <label>Age</label>
+                  <label>Date of Birth</label>
                   <input
-                    type="text"
-                    value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    type="date"
+                    value={formData.date_of_birth}
+                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                     className="input"
                   />
                 </div>
@@ -234,6 +328,233 @@ export default function DogManagement({
                   />
                 </div>
               </div>
+              
+              {/* Schedule Section */}
+              <div className="schedule-section">
+                <h4>Weekly Schedule</h4>
+                <div className="schedule-active">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.schedule.active}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        schedule: { ...formData.schedule, active: e.target.checked } 
+                      })}
+                    />
+                    Enable recurring schedule
+                  </label>
+                </div>
+                
+                {formData.schedule.active && (
+                  <>
+                    <div className="form-group">
+                      <label>Schedule Start Date (optional)</label>
+                      <input
+                        type="date"
+                        value={formData.schedule.start_date || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          schedule: { ...formData.schedule, start_date: e.target.value || undefined }
+                        })}
+                        className="input"
+                        title="Leave empty to start immediately"
+                      />
+                      <small>Leave empty to start the schedule immediately</small>
+                    </div>
+                    <div className="form-group">
+                      <label>Schedule End Date (optional)</label>
+                      <input
+                        type="date"
+                        value={formData.schedule.end_date || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          schedule: { ...formData.schedule, end_date: e.target.value || undefined }
+                        })}
+                        className="input"
+                        title="Leave empty for ongoing schedule"
+                      />
+                      <small>Leave empty for an ongoing schedule</small>
+                    </div>
+                  </>
+                )}
+                
+                {formData.schedule.active && (
+                  <>
+                    {/* Daycare Schedule */}
+                    <div className="service-schedule">
+                      <h5>Daycare Days</h5>
+                      <div className="day-selector">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <label key={day} className="day-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={formData.schedule.daycare_days.includes(index)}
+                              onChange={(e) => {
+                                const days = [...formData.schedule.daycare_days];
+                                if (e.target.checked) {
+                                  days.push(index);
+                                } else {
+                                  const dayIndex = days.indexOf(index);
+                                  if (dayIndex > -1) days.splice(dayIndex, 1);
+                                }
+                                setFormData({
+                                  ...formData,
+                                  schedule: { ...formData.schedule, daycare_days: days.sort() }
+                                });
+                              }}
+                            />
+                            {day}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="time-fields">
+                        <input
+                          type="time"
+                          placeholder="Drop-off time"
+                          value={formData.schedule.daycare_drop_off || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            schedule: { ...formData.schedule, daycare_drop_off: e.target.value }
+                          })}
+                          className="input time-input"
+                        />
+                        <input
+                          type="time"
+                          placeholder="Pick-up time"
+                          value={formData.schedule.daycare_pick_up || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            schedule: { ...formData.schedule, daycare_pick_up: e.target.value }
+                          })}
+                          className="input time-input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Training Schedule */}
+                    <div className="service-schedule">
+                      <h5>Training Days</h5>
+                      <div className="day-selector">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <label key={day} className="day-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={formData.schedule.training_days.includes(index)}
+                              onChange={(e) => {
+                                const days = [...formData.schedule.training_days];
+                                if (e.target.checked) {
+                                  days.push(index);
+                                } else {
+                                  const dayIndex = days.indexOf(index);
+                                  if (dayIndex > -1) days.splice(dayIndex, 1);
+                                }
+                                setFormData({
+                                  ...formData,
+                                  schedule: { ...formData.schedule, training_days: days.sort() }
+                                });
+                              }}
+                            />
+                            {day}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="time-fields">
+                        <input
+                          type="time"
+                          placeholder="Session start"
+                          value={formData.schedule.training_drop_off || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            schedule: { ...formData.schedule, training_drop_off: e.target.value }
+                          })}
+                          className="input time-input"
+                        />
+                        <input
+                          type="time"
+                          placeholder="Session end"
+                          value={formData.schedule.training_pick_up || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            schedule: { ...formData.schedule, training_pick_up: e.target.value }
+                          })}
+                          className="input time-input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Boarding Schedule */}
+                    <div className="service-schedule">
+                      <h5>Boarding Days</h5>
+                      <div className="day-selector">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <label key={day} className="day-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={formData.schedule.boarding_days.includes(index)}
+                              onChange={(e) => {
+                                const days = [...formData.schedule.boarding_days];
+                                if (e.target.checked) {
+                                  days.push(index);
+                                } else {
+                                  const dayIndex = days.indexOf(index);
+                                  if (dayIndex > -1) days.splice(dayIndex, 1);
+                                }
+                                setFormData({
+                                  ...formData,
+                                  schedule: { ...formData.schedule, boarding_days: days.sort() }
+                                });
+                              }}
+                            />
+                            {day}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* Household Section */}
+              <div className="household-section">
+                <h4>Household</h4>
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.create_household}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        create_household: e.target.checked,
+                        household_id: e.target.checked ? '' : formData.household_id
+                      })}
+                    />
+                    Create new household for this dog
+                  </label>
+                </div>
+                {!formData.create_household && (
+                  <div className="form-group">
+                    <label>Join existing household (optional)</label>
+                    <select
+                      value={formData.household_id}
+                      onChange={(e) => setFormData({ ...formData, household_id: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">No household</option>
+                      {Array.from(new Set(dogs.filter(d => d.household_id).map(d => d.household_id))).map(householdId => {
+                        const householdDogs = dogs.filter(d => d.household_id === householdId);
+                        const householdName = householdDogs.map(d => d.name).join(', ');
+                        return (
+                          <option key={householdId} value={householdId}>
+                            {householdName} ({householdDogs.length} dogs)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+              </div>
+              
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={resetForm}>
                   Cancel
@@ -247,40 +568,96 @@ export default function DogManagement({
         </div>
       )}
 
-      <div className="dogs-grid">
-        {filteredDogs.map(dog => (
-          <div key={dog.id} className="dog-card">
-            <div className="dog-header">
-              <h3>{dog.name}</h3>
-              <div className="dog-actions">
-                <button 
-                  className="btn-icon"
-                  onClick={() => handleEdit(dog)}
-                  title="Edit dog"
-                >
-                  <Edit size={16} />
-                </button>
-                <button 
-                  className="btn-icon btn-danger"
-                  onClick={() => handleDelete(dog)}
-                  title="Delete dog"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+      <div className="dogs-container">
+        {/* Household Groups */}
+        {Object.entries(households).map(([householdId, householdDogs]) => (
+          <div key={householdId} className="household-group">
+            <div className="household-header">
+              <h3>
+                {householdDogs[0].owner}'s Household ({householdDogs.length} dog{householdDogs.length > 1 ? 's' : ''})
+              </h3>
             </div>
-            <div className="dog-info">
-              <p><strong>Owner:</strong> {dog.owner}</p>
-              <p><strong>Breed:</strong> {dog.breed}</p>
-              <p><strong>Age:</strong> {dog.age}</p>
-              {dog.phone && <p><strong>Phone:</strong> {dog.phone}</p>}
-              {dog.email && <p><strong>Email:</strong> {dog.email}</p>}
-              {dog.vaccine_date && (
-                <p><strong>Last Vaccine:</strong> {new Date(dog.vaccine_date).toLocaleDateString()}</p>
-              )}
+            <div className="dogs-grid">
+              {householdDogs.map(dog => (
+                <div key={dog.id} className="dog-card">
+                  <div className="dog-header">
+                    <h4>{dog.name}</h4>
+                    <div className="dog-actions">
+                      <button 
+                        className="btn-icon"
+                        onClick={() => handleEdit(dog)}
+                        title="Edit dog"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon btn-danger"
+                        onClick={() => handleDelete(dog)}
+                        title="Delete dog"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="dog-info">
+                    <p><strong>Owner:</strong> {dog.owner}</p>
+                    <p><strong>Breed:</strong> {dog.breed}</p>
+                    <p><strong>Age:</strong> <DogAgeDisplay key={dog.date_of_birth} dateOfBirth={dog.date_of_birth} /></p>
+                    {dog.phone && <p><strong>Phone:</strong> {dog.phone}</p>}
+                    {dog.email && <p><strong>Email:</strong> {dog.email}</p>}
+                    {dog.vaccine_date && (
+                      <p><strong>Last Vaccine:</strong> {new Date(dog.vaccine_date).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
+
+        {/* Individual Dogs */}
+        {individualDogs.length > 0 && (
+          <div className="household-group">
+            <div className="household-header">
+              <h3>Individual Dogs ({individualDogs.length} dog{individualDogs.length > 1 ? 's' : ''})</h3>
+            </div>
+            <div className="dogs-grid">
+              {individualDogs.map(dog => (
+                <div key={dog.id} className="dog-card">
+                  <div className="dog-header">
+                    <h4>{dog.name}</h4>
+                    <div className="dog-actions">
+                      <button 
+                        className="btn-icon"
+                        onClick={() => handleEdit(dog)}
+                        title="Edit dog"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon btn-danger"
+                        onClick={() => handleDelete(dog)}
+                        title="Delete dog"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="dog-info">
+                    <p><strong>Owner:</strong> {dog.owner}</p>
+                    <p><strong>Breed:</strong> {dog.breed}</p>
+                    <p><strong>Age:</strong> <DogAgeDisplay key={dog.date_of_birth} dateOfBirth={dog.date_of_birth} /></p>
+                    {dog.phone && <p><strong>Phone:</strong> {dog.phone}</p>}
+                    {dog.email && <p><strong>Email:</strong> {dog.email}</p>}
+                    {dog.vaccine_date && (
+                      <p><strong>Last Vaccine:</strong> {new Date(dog.vaccine_date).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {filteredDogs.length === 0 && (

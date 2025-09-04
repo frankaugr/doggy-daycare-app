@@ -128,6 +128,15 @@ body {
   color: white;
 }
 
+.btn-warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: #d97706;
+}
+
 .btn-secondary:hover {
   background-color: #4b5563;
 }
@@ -225,6 +234,35 @@ body {
   width: auto;
 }
 
+/* Compact form styles */
+.form-group-compact {
+  margin-bottom: 0.5rem;
+}
+
+.form-group-compact label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.125rem;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.times-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.input-sm {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.dog-details {
+  margin-top: 0.75rem;
+}
+
 /* Toolbar */
 .toolbar {
   display: flex;
@@ -318,6 +356,7 @@ body {
 .attendance-item {
   display: flex !important;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem;
   border: 1px solid #e5e7eb;
@@ -328,6 +367,17 @@ body {
 
 .attendance-item input[type="checkbox"] {
   width: auto;
+}
+
+.dog-name {
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+}
+
+.attendance-select {
+  min-width: 120px;
+  font-size: 0.875rem;
 }
 
 .daily-dogs {
@@ -425,6 +475,94 @@ body {
   border-color: #dc2626;
 }
 
+/* Compact horizontal checklist styles */
+.checklist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.checklist-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checklist-items-inline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.checklist-item-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  min-height: 32px;
+}
+
+/* Responsive grid for smaller screens */
+@media (max-width: 768px) {
+  .checklist-items-inline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .checklist-items-inline {
+    grid-template-columns: 1fr;
+  }
+}
+
+.item-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  flex: 1;
+  text-align: left;
+}
+
+.checklist-item-inline .checklist-buttons {
+  flex-shrink: 0;
+}
+
+.check-btn-xs {
+  padding: 0.125rem 0.25rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-btn-xs:hover {
+  background-color: #f9fafb;
+}
+
+.check-btn-xs.active-good {
+  background-color: #22c55e;
+  color: white;
+  border-color: #16a34a;
+}
+
+.check-btn-xs.active-bad {
+  background-color: #ef4444;
+  color: white;
+  border-color: #dc2626;
+}
+
 .dog-times {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -432,7 +570,461 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Calendar */
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.calendar-navigation h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  min-width: 200px;
+  text-align: center;
+}
+
+.calendar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f3f4f6;
+}
+
+.weekday {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  border-right: 1px solid #e5e7eb;
+}
+
+.weekday:last-child {
+  border-right: none;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+  min-height: 120px;
+  padding: 0.5rem;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: #f9fafb;
+}
+
+.calendar-day:last-child {
+  border-right: none;
+}
+
+.calendar-day.other-month {
+  background-color: #f9fafb;
+  color: #9ca3af;
+}
+
+.calendar-day.has-attendance {
+  background-color: #fef3c7;
+}
+
+.calendar-day.today {
+  background-color: #dbeafe;
+  border: 2px solid #3b82f6;
+}
+
+.calendar-day.today.has-attendance {
+  background-color: #bfdbfe;
+}
+
+.calendar-day.today .day-number {
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 1.1em;
+}
+
+.day-number {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.attendance-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.indicator {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: white;
+}
+
+.indicator.daycare {
+  background-color: #3b82f6;
+}
+
+.indicator.training {
+  background-color: #10b981;
+}
+
+.indicator.boarding {
+  background-color: #f59e0b;
+}
+
+.service-tabs {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.service-tabs .tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.service-tabs .tab:hover {
+  background-color: #f3f4f6;
+}
+
+.service-tabs .tab.active {
+  border-bottom-color: #3b82f6;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.attendance-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attendance-row {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: white;
+}
+
+.dog-info label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.attendance-details {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.time-input {
+  width: 100%;
+}
+
+.notes-input {
+  width: 100%;
+}
+
+.schedule-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.add-schedule,
+.existing-schedules {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: white;
+}
+
+.add-schedule h4,
+.existing-schedules h4 {
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+.custom-days {
+  margin: 1rem 0;
+}
+
+.custom-days label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.day-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.day-btn {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.day-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.day-btn.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.schedule-list {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schedule-item {
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.schedule-info {
+  flex: 1;
+}
+
+.schedule-pattern {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.schedule-dates {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.schedule-status {
+  margin-left: 1rem;
+}
+
+.status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status.active {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status.inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.empty-message {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+.info-message {
+  padding: 1rem;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-message p {
+  margin: 0;
+  color: #0c4a6e;
+}
+
+.schedule-times {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.modal-content.large {
+  max-width: 900px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Schedule Section in Dog Management */
+.schedule-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #f9fafb;
+}
+
+.schedule-section h4 {
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+.schedule-active {
+  margin-bottom: 1.5rem;
+}
+
+.schedule-active label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.service-schedule {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+}
+
+.service-schedule h5 {
+  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.day-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.day-checkbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 50px;
+}
+
+.day-checkbox:hover {
+  background: #f3f4f6;
+}
+
+.day-checkbox input[type="checkbox"] {
+  margin-bottom: 0.25rem;
+}
+
+.day-checkbox input[type="checkbox"]:checked + span,
+.day-checkbox:has(input[type="checkbox"]:checked) {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.time-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.time-fields .time-input {
+  width: 100%;
+}
+
 /* Dog Management */
+.dogs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.household-group {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.household-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.household-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
 .dogs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -659,6 +1251,18 @@ body {
     grid-template-columns: 1fr;
   }
   
+  .dogs-container {
+    gap: 1.5rem;
+  }
+  
+  .household-group {
+    padding: 1rem;
+  }
+  
+  .household-header {
+    margin-bottom: 1rem;
+  }
+  
   .compliance-grid {
     grid-template-columns: 1fr;
   }
@@ -800,4 +1404,137 @@ body {
 .btn-small:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.btn-xs {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.625rem;
+  border-radius: 3px;
+  min-width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Household indicators */
+.household-indicator {
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
+  opacity: 0.7;
+  cursor: help;
+}
+
+.dog-name-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.household-info {
+  margin-top: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #0c4a6e;
+}
+
+.household-section {
+  margin-top: 1.5rem;
+}
+
+.household-section h4 {
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+/* Global time indicators */
+.global-time-indicator {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: normal;
+  margin-left: 0.25rem;
+  font-style: italic;
+}
+
+.toolbar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-input {
+  width: 80px;
+  min-width: 80px;
+}
+
+/* Household Attendance Styles */
+.household-attendance-group {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.household-attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.household-attendance-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.household-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.household-attendance-section {
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.household-attendance-section .attendance-row {
+  border-bottom: 1px solid #f3f4f6;
+  margin: 0;
+}
+
+.household-attendance-section .attendance-row:last-child {
+  border-bottom: none;
+}
+
+/* Daily Checklist household styles */
+.household-attendance-group .attendance-grid {
+  padding: 0.5rem;
+}
+
+.household-attendance-group .attendance-item {
+  background-color: #fafafa;
+  border: 1px solid #e5e7eb;
+}
+
+.dog-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
 }
