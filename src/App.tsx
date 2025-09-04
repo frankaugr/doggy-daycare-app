@@ -7,8 +7,22 @@ import DogManagement from './components/DogManagement';
 import ComplianceStatus from './components/ComplianceStatus';
 import Settings from './components/Settings';
 import ConnectionStatus from './components/ConnectionStatus';
+import Calendar from './components/Calendar';
 import { cloudBackupService } from './services/cloudBackup';
 import './App.css';
+
+export interface DogSchedule {
+  daycare_days: number[];
+  training_days: number[];
+  boarding_days: number[];
+  daycare_drop_off?: string;
+  daycare_pick_up?: string;
+  training_drop_off?: string;
+  training_pick_up?: string;
+  start_date?: string;
+  end_date?: string;
+  active: boolean;
+}
 
 export interface Dog {
   id: string;
@@ -17,9 +31,54 @@ export interface Dog {
   phone: string;
   email: string;
   breed: string;
-  age: string;
+  date_of_birth?: string;
   vaccine_date?: string;
   consent_last_signed?: string;
+  created_at: string;
+  schedule: DogSchedule;
+  household_id?: string;
+}
+
+export enum ServiceType {
+  Daycare = 'Daycare',
+  Training = 'Training',
+  Boarding = 'Boarding',
+}
+
+export enum AttendanceType {
+  NotAttending = 'not_attending',
+  HalfDay = 'half_day',
+  FullDay = 'full_day',
+}
+
+export enum RecurrencePattern {
+  None = 'None',
+  Daily = 'Daily',
+  Weekly = 'Weekly',
+  BiWeekly = 'BiWeekly',
+  Monthly = 'Monthly',
+  Custom = 'Custom',
+}
+
+export interface AttendanceEntry {
+  dog_id: string;
+  service_type: ServiceType;
+  attending: boolean;
+  drop_off_time?: string;
+  pick_up_time?: string;
+  notes?: string;
+}
+
+export interface RecurringSchedule {
+  id: string;
+  dog_id: string;
+  service_type: ServiceType;
+  pattern: RecurrencePattern;
+  start_date: string;
+  end_date?: string;
+  drop_off_time?: string;
+  pick_up_time?: string;
+  active: boolean;
   created_at: string;
 }
 
@@ -33,7 +92,8 @@ export interface DailyRecord {
 
 export interface DayData {
   attendance: {
-    dogs: Record<string, boolean>;
+    dogs: Record<string, boolean>; // Legacy format - keep for backward compatibility
+    types?: Record<string, AttendanceType>; // New format with Half-Day support
   };
   records: Record<string, DailyRecord>;
   am_temp?: string;
@@ -64,7 +124,7 @@ export interface Settings {
   };
 }
 
-type Tab = 'daily' | 'management' | 'compliance' | 'settings';
+type Tab = 'daily' | 'management' | 'calendar' | 'compliance' | 'settings';
 
 function App() {
   const [currentTab, setCurrentTab] = useState<Tab>('daily');
@@ -106,8 +166,10 @@ function App() {
         phone: dogData.phone,
         email: dogData.email,
         breed: dogData.breed,
-        age: dogData.age,
+        dateOfBirth: dogData.date_of_birth || null,
         vaccineDate: dogData.vaccine_date || null,
+        schedule: dogData.schedule,
+        householdId: dogData.household_id || null,
       });
       loadDogs();
     } catch (error) {
@@ -194,6 +256,8 @@ function App() {
             onImportData={importData}
           />
         );
+      case 'calendar':
+        return <Calendar dogs={dogs} />;
       case 'compliance':
         return <ComplianceStatus dogs={dogs} settings={settings} />;
       case 'settings':
@@ -235,6 +299,12 @@ function App() {
             onClick={() => setCurrentTab('management')}
           >
             Dog Management
+          </button>
+          <button 
+            className={`tab ${currentTab === 'calendar' ? 'active' : ''}`}
+            onClick={() => setCurrentTab('calendar')}
+          >
+            Calendar
           </button>
           <button 
             className={`tab ${currentTab === 'compliance' ? 'active' : ''}`}

@@ -8,6 +8,18 @@ interface ComplianceStatusProps {
 }
 
 export default function ComplianceStatus({ dogs, settings }: ComplianceStatusProps) {
+  const isValidEmail = (email: string | undefined): boolean => {
+    if (!email) return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const isValidPhone = (phone: string | undefined): boolean => {
+    if (!phone) return false;
+    // Remove all non-digits and check if we have at least 10 digits
+    const digitsOnly = phone.replace(/[^0-9]/g, '');
+    return digitsOnly.length >= 10;
+  };
   const getVaccineStatus = (dog: Dog) => {
     if (!dog.vaccine_date) return 'missing';
     
@@ -191,22 +203,24 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
                   {dog.email && <p><strong>Email:</strong> {dog.email}</p>}
                 </div>
                 <div className="compliance-actions">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => sendConsentEmail(dog)}
-                    disabled={!dog.email}
-                  >
-                    <Mail size={16} />
-                    Email
-                  </button>
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={() => sendConsentWhatsApp(dog)}
-                    disabled={!dog.phone}
-                  >
-                    <MessageCircle size={16} />
-                    WhatsApp
-                  </button>
+                  {isValidEmail(dog.email) && (
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => sendConsentEmail(dog)}
+                    >
+                      <Mail size={16} />
+                      Email
+                    </button>
+                  )}
+                  {isValidPhone(dog.phone) && (
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => sendConsentWhatsApp(dog)}
+                    >
+                      <MessageCircle size={16} />
+                      WhatsApp
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -237,22 +251,24 @@ export default function ComplianceStatus({ dogs, settings }: ComplianceStatusPro
                   {dog.email && <p><strong>Email:</strong> {dog.email}</p>}
                 </div>
                 <div className="compliance-actions">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => sendVaccineEmail(dog)}
-                    disabled={!dog.email}
-                  >
-                    <Mail size={16} />
-                    Email
-                  </button>
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={() => sendVaccineWhatsApp(dog)}
-                    disabled={!dog.phone}
-                  >
-                    <MessageCircle size={16} />
-                    WhatsApp
-                  </button>
+                  {isValidEmail(dog.email) && (
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => sendVaccineEmail(dog)}
+                    >
+                      <Mail size={16} />
+                      Email
+                    </button>
+                  )}
+                  {isValidPhone(dog.phone) && (
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => sendVaccineWhatsApp(dog)}
+                    >
+                      <MessageCircle size={16} />
+                      WhatsApp
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
