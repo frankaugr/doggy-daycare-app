@@ -267,6 +267,7 @@ body {
 .toolbar {
   display: flex;
   gap: 1rem;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
@@ -1472,8 +1473,8 @@ body {
 }
 
 .time-input {
-  width: 80px;
-  min-width: 80px;
+  width: 110px;
+  min-width: 110px;
 }
 
 /* Household Attendance Styles */

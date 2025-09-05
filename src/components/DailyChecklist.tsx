@@ -429,14 +429,6 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             className="input temp-input"
           />
         </label>
-        {attendingDogs.length > 0 && (
-          <button
-            className="btn btn-success"
-            onClick={checkAllDogsAllItems}
-          >
-            Check All Items
-          </button>
-        )}
         <label className="toolbar-item">
           Global Drop-off:
           <input
@@ -463,6 +455,14 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             onClick={() => applyGlobalTimes()}
           >
             Apply Global Times
+          </button>
+        )}
+        {attendingDogs.length > 0 && (
+          <button
+            className="btn btn-success"
+            onClick={checkAllDogsAllItems}
+          >
+            Check All Items
           </button>
         )}
       </div>
