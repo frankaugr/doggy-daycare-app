@@ -166,10 +166,10 @@ function App() {
         phone: dogData.phone,
         email: dogData.email,
         breed: dogData.breed,
-        dateOfBirth: dogData.date_of_birth || null,
-        vaccineDate: dogData.vaccine_date || null,
+        date_of_birth: dogData.date_of_birth || null,
+        vaccine_date: dogData.vaccine_date || null,
         schedule: dogData.schedule,
-        householdId: dogData.household_id || null,
+        household_id: dogData.household_id || null,
       });
       loadDogs();
     } catch (error) {
