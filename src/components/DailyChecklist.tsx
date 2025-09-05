@@ -429,6 +429,14 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             className="input temp-input"
           />
         </label>
+        {attendingDogs.length > 0 && (
+          <button
+            className="btn btn-success"
+            onClick={checkAllDogsAllItems}
+          >
+            Check All Items
+          </button>
+        )}
         <label className="toolbar-item">
           Global Drop-off:
           <input
@@ -449,23 +457,13 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
             className="input time-input"
           />
         </label>
-        {attendingDogs.length > 0 && (
-          <>
-            <button
-              className="btn btn-success"
-              onClick={checkAllDogsAllItems}
-            >
-              Check All Items
-            </button>
-            {(globalDropOffTime || globalPickUpTime) && (
-              <button
-                className="btn btn-primary"
-                onClick={() => applyGlobalTimes()}
-              >
-                Apply Global Times
-              </button>
-            )}
-          </>
+        {attendingDogs.length > 0 && (globalDropOffTime || globalPickUpTime) && (
+          <button
+            className="btn btn-primary"
+            onClick={() => applyGlobalTimes()}
+          >
+            Apply Global Times
+          </button>
         )}
       </div>
 
