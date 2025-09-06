@@ -113,7 +113,8 @@ export default function Calendar({ dogs }: CalendarProps) {
     attending: boolean,
     dropOffTime?: string,
     pickUpTime?: string,
-    notes?: string
+    notes?: string,
+    skipHouseholdSync: boolean = false
   ) => {
     if (!selectedDate) return;
     
@@ -122,9 +123,10 @@ export default function Calendar({ dogs }: CalendarProps) {
       
       // Find the dog and get their household
       const dog = dogs.find(d => d.id === dogId);
-      const dogsToUpdate = dog?.household_id 
-        ? dogs.filter(d => d.household_id === dog.household_id)
-        : [dog].filter(Boolean);
+      // Only update household if not skipping sync AND dog has household
+      const dogsToUpdate = skipHouseholdSync || !dog?.household_id 
+        ? [dog].filter(Boolean)
+        : dogs.filter(d => d.household_id === dog.household_id);
       
       // Update attendance for all dogs in the household
       for (const targetDog of dogsToUpdate) {
@@ -307,7 +309,8 @@ interface AttendanceModalProps {
     attending: boolean,
     dropOffTime?: string,
     pickUpTime?: string,
-    notes?: string
+    notes?: string,
+    skipHouseholdSync?: boolean
   ) => void;
 }
 
@@ -382,7 +385,8 @@ function AttendanceModal({ date, dogs, attendance, onClose, onUpdateAttendance }
         data.attending,
         data.dropOffTime || undefined,
         data.pickUpTime || undefined,
-        data.notes || undefined
+        data.notes || undefined,
+        true // Skip household sync for individual dog selections
       );
     });
     onClose();
