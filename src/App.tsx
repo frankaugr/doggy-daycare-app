@@ -160,6 +160,17 @@ function App() {
 
   const addDog = async (dogData: Omit<Dog, 'id' | 'created_at'>) => {
     try {
+      // Clean up schedule data - convert empty strings to null for optional fields
+      const cleanSchedule = {
+        ...dogData.schedule,
+        daycare_drop_off: dogData.schedule.daycare_drop_off || null,
+        daycare_pick_up: dogData.schedule.daycare_pick_up || null,
+        training_drop_off: dogData.schedule.training_drop_off || null,
+        training_pick_up: dogData.schedule.training_pick_up || null,
+        start_date: dogData.schedule.start_date || null,
+        end_date: dogData.schedule.end_date || null,
+      };
+
       await invoke('add_dog', {
         name: dogData.name,
         owner: dogData.owner,
@@ -168,7 +179,7 @@ function App() {
         breed: dogData.breed,
         date_of_birth: dogData.date_of_birth || null,
         vaccine_date: dogData.vaccine_date || null,
-        schedule: dogData.schedule,
+        schedule: cleanSchedule,
         household_id: dogData.household_id || null,
       });
       loadDogs();
@@ -180,7 +191,21 @@ function App() {
 
   const updateDog = async (dog: Dog) => {
     try {
-      await invoke('update_dog', { dog });
+      // Clean up schedule data - convert empty strings to null for optional fields
+      const cleanDog = {
+        ...dog,
+        schedule: {
+          ...dog.schedule,
+          daycare_drop_off: dog.schedule.daycare_drop_off || null,
+          daycare_pick_up: dog.schedule.daycare_pick_up || null,
+          training_drop_off: dog.schedule.training_drop_off || null,
+          training_pick_up: dog.schedule.training_pick_up || null,
+          start_date: dog.schedule.start_date || null,
+          end_date: dog.schedule.end_date || null,
+        }
+      };
+
+      await invoke('update_dog', { dog: cleanDog });
       loadDogs();
     } catch (error) {
       console.error('Failed to update dog:', error);
