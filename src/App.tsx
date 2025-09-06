@@ -100,6 +100,13 @@ export interface DayData {
   pm_temp?: string;
 }
 
+export interface BackupFileInfo {
+  filename: string;
+  filepath: string;
+  modified_time: string;
+  size_bytes: number;
+}
+
 export interface Settings {
   business_name: string;
   business_phone: string;

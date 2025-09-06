@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Save, RotateCcw, Mail, Settings as SettingsIcon, MessageCircle, Cloud, FolderOpen } from 'lucide-react';
-import { Settings as SettingsType } from '../App';
+import { Save, RotateCcw, Mail, Settings as SettingsIcon, MessageCircle, Cloud, FolderOpen, Download, RefreshCw, AlertTriangle } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
+import { Settings as SettingsType, BackupFileInfo } from '../App';
 
 interface SettingsProps {
   settings: SettingsType;
@@ -18,6 +19,9 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
     }
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [backupFiles, setBackupFiles] = useState<BackupFileInfo[]>([]);
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [showBackupRecovery, setShowBackupRecovery] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +55,57 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
         }
       });
     }
+  };
+
+  const loadBackupFiles = async () => {
+    if (!formData.cloud_backup?.cloud_directory) {
+      alert('Please set a cloud directory path first.');
+      return;
+    }
+
+    setIsLoadingBackups(true);
+    try {
+      const files = await invoke<BackupFileInfo[]>('list_backup_files', {
+        cloudDirectory: formData.cloud_backup.cloud_directory
+      });
+      setBackupFiles(files);
+      setShowBackupRecovery(true);
+    } catch (error) {
+      console.error('Failed to load backup files:', error);
+      alert('Failed to load backup files. Please check your cloud directory path and try again.');
+    } finally {
+      setIsLoadingBackups(false);
+    }
+  };
+
+  const restoreFromBackup = async (backupFile: BackupFileInfo) => {
+    const confirmMessage = `Are you sure you want to restore from backup "${backupFile.filename}"?\n\nThis will replace ALL current data with the backup data. This action cannot be undone!\n\nBackup created: ${backupFile.modified_time}`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await invoke('restore_from_backup', {
+        backupFilepath: backupFile.filepath
+      });
+      
+      alert('Data successfully restored from backup! The application will reload to reflect the changes.');
+      
+      // Reload the page to refresh all data
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to restore from backup:', error);
+      alert('Failed to restore from backup. Please try again or check the backup file.');
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -314,9 +369,106 @@ export default function Settings({ settings, onUpdateSettings }: SettingsProps) 
                   How often to automatically sync when online (5-480 minutes)
                 </div>
               </div>
+
+              <div className="form-group">
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={loadBackupFiles}
+                    disabled={isLoadingBackups}
+                  >
+                    {isLoadingBackups ? (
+                      <>
+                        <RefreshCw size={16} className="spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        Recover from Backup
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="template-help">
+                  Browse and restore data from cloud backup files
+                </div>
+              </div>
             </>
           )}
         </div>
+
+        {showBackupRecovery && (
+          <div className="card">
+            <div className="card-header">
+              <Download size={20} />
+              <h3>Backup Recovery</h3>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setShowBackupRecovery(false)}
+                title="Close backup recovery"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="backup-warning">
+              <div className="warning-box">
+                <AlertTriangle size={20} />
+                <div>
+                  <strong>Warning:</strong> Restoring from backup will replace ALL current data with the backup data. 
+                  This action cannot be undone. Make sure you have a current backup before proceeding.
+                </div>
+              </div>
+            </div>
+
+            {backupFiles.length === 0 ? (
+              <div className="empty-state">
+                <p>No backup files found in the specified cloud directory.</p>
+                <p>Backup files should be named "doggy-daycare-backup-*.json"</p>
+              </div>
+            ) : (
+              <div className="backup-files-list">
+                <div className="backup-files-header">
+                  <span>Found {backupFiles.length} backup file{backupFiles.length !== 1 ? 's' : ''}</span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={loadBackupFiles}
+                    disabled={isLoadingBackups}
+                  >
+                    <RefreshCw size={14} />
+                    Refresh
+                  </button>
+                </div>
+                
+                <div className="backup-files-grid">
+                  {backupFiles.map((file, index) => (
+                    <div key={index} className="backup-file-item">
+                      <div className="backup-file-info">
+                        <div className="backup-file-name">{file.filename}</div>
+                        <div className="backup-file-details">
+                          <span className="backup-file-date">{file.modified_time}</span>
+                          <span className="backup-file-size">{formatFileSize(file.size_bytes)}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-warning btn-sm"
+                        onClick={() => restoreFromBackup(file)}
+                      >
+                        <Download size={14} />
+                        Restore
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="card">
           <div className="card-header">

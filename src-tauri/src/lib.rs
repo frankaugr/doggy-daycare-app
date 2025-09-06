@@ -1235,6 +1235,88 @@ fn save_cloud_backup(cloud_directory: String, filename: String, data: String) ->
     Ok(())
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BackupFileInfo {
+    pub filename: String,
+    pub filepath: String,
+    pub modified_time: String,
+    pub size_bytes: u64,
+}
+
+#[tauri::command]
+fn list_backup_files(cloud_directory: String) -> Result<Vec<BackupFileInfo>, String> {
+    let cloud_path = PathBuf::from(&cloud_directory);
+    
+    if !cloud_path.exists() {
+        return Err(format!("Cloud directory does not exist: {}", cloud_directory));
+    }
+    
+    if !cloud_path.is_dir() {
+        return Err(format!("Cloud path is not a directory: {}", cloud_directory));
+    }
+    
+    let mut backup_files = Vec::new();
+    
+    match fs::read_dir(&cloud_path) {
+        Ok(entries) => {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if let Some(filename) = path.file_name() {
+                        if let Some(filename_str) = filename.to_str() {
+                            if filename_str.starts_with("doggy-daycare-backup-") && filename_str.ends_with(".json") {
+                                if let Ok(metadata) = entry.metadata() {
+                                    if let Ok(modified) = metadata.modified() {
+                                        let datetime: DateTime<Utc> = modified.into();
+                                        let file_info = BackupFileInfo {
+                                            filename: filename_str.to_string(),
+                                            filepath: path.to_string_lossy().to_string(),
+                                            modified_time: datetime.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+                                            size_bytes: metadata.len(),
+                                        };
+                                        backup_files.push(file_info);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            return Err(format!("Failed to read cloud directory: {}", e));
+        }
+    }
+    
+    // Sort by modification time (newest first)
+    backup_files.sort_by(|a, b| b.modified_time.cmp(&a.modified_time));
+    
+    Ok(backup_files)
+}
+
+#[tauri::command]
+fn restore_from_backup(backup_filepath: String) -> Result<(), String> {
+    let backup_path = PathBuf::from(&backup_filepath);
+    
+    if !backup_path.exists() {
+        return Err(format!("Backup file does not exist: {}", backup_filepath));
+    }
+    
+    // Read backup file content
+    let backup_content = fs::read_to_string(&backup_path)
+        .map_err(|e| format!("Failed to read backup file: {}", e))?;
+    
+    // Parse as AppData to validate
+    let backup_data: AppData = serde_json::from_str(&backup_content)
+        .map_err(|e| format!("Failed to parse backup file: {}", e))?;
+    
+    // Save the backup data as current data
+    save_app_data(&backup_data)?;
+    
+    println!("Successfully restored data from backup: {}", backup_filepath);
+    Ok(())
+}
+
 #[tauri::command]
 fn cleanup_old_backups(cloud_directory: String, max_backups: u32) -> Result<(), String> {
     let cloud_path = PathBuf::from(&cloud_directory);
@@ -1312,6 +1394,8 @@ pub fn run() {
             update_cloud_backup_config,
             save_cloud_backup,
             cleanup_old_backups,
+            list_backup_files,
+            restore_from_backup,
             calculate_age,
             get_recurring_schedules,
             add_recurring_schedule,
