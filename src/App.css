@@ -770,6 +770,70 @@ body {
   width: 100%;
 }
 
+/* Inline attendance row layout */
+.attendance-row-inline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  background: white;
+  min-height: 3rem;
+}
+
+.attendance-row-inline:last-child {
+  border-bottom: none;
+}
+
+.dog-info-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.dog-info-inline input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.dog-name {
+  flex: 1;
+}
+
+.attendance-details-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.time-input-inline {
+  width: 80px;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.notes-input-inline {
+  flex: 1;
+  padding: 0.25rem;
+  font-size: 0.875rem;
+  max-width: 200px;
+}
+
+.remove-btn {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+/* Disable styles for inactive fields */
+.attendance-details-inline input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .schedule-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;

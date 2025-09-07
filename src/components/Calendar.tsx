@@ -433,64 +433,63 @@ function AttendanceModal({ date, dogs, attendance, onClose, onUpdateAttendance }
                 </div>
               </div>
               {householdDogs.map(dog => (
-                <div key={dog.id} className="attendance-row">
-                  <div className="dog-info">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData[dog.id]?.attending || false}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], attending: e.target.checked }
-                        }))}
-                      />
-                      <strong>
-                        {dog.name}
-                        {formData[dog.id]?.attending && (
-                          <button
-                            className="btn-icon btn-danger btn-xs"
-                            onClick={() => removeFromHousehold(dog.id)}
-                            title="Remove this dog from attendance"
-                          >
-                            ✗
-                          </button>
-                        )}
-                      </strong> ({dog.owner})
-                    </label>
+                <div key={dog.id} className="attendance-row-inline">
+                  <div className="dog-info-inline">
+                    <input
+                      type="checkbox"
+                      checked={formData[dog.id]?.attending || false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], attending: e.target.checked }
+                      }))}
+                    />
+                    <span className="dog-name">
+                      <strong>{dog.name}</strong> ({dog.owner})
+                    </span>
+                  </div>
+                  <div className="attendance-details-inline">
+                    <input
+                      type="time"
+                      placeholder="Drop-off"
+                      value={formData[dog.id]?.dropOffTime || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], dropOffTime: e.target.value }
+                      }))}
+                      className="input time-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
+                    <input
+                      type="time"
+                      placeholder="Pick-up"
+                      value={formData[dog.id]?.pickUpTime || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], pickUpTime: e.target.value }
+                      }))}
+                      className="input time-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Notes"
+                      value={formData[dog.id]?.notes || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], notes: e.target.value }
+                      }))}
+                      className="input notes-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
                   </div>
                   {formData[dog.id]?.attending && (
-                    <div className="attendance-details">
-                      <input
-                        type="time"
-                        placeholder="Drop-off"
-                        value={formData[dog.id]?.dropOffTime || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], dropOffTime: e.target.value }
-                        }))}
-                        className="input time-input"
-                      />
-                      <input
-                        type="time"
-                        placeholder="Pick-up"
-                        value={formData[dog.id]?.pickUpTime || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], pickUpTime: e.target.value }
-                        }))}
-                        className="input time-input"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Notes"
-                        value={formData[dog.id]?.notes || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], notes: e.target.value }
-                        }))}
-                        className="input notes-input"
-                      />
-                    </div>
+                    <button
+                      className="btn-icon btn-danger btn-xs remove-btn"
+                      onClick={() => removeFromHousehold(dog.id)}
+                      title="Remove this dog from attendance"
+                    >
+                      ✗
+                    </button>
                   )}
                 </div>
               ))}
@@ -504,54 +503,55 @@ function AttendanceModal({ date, dogs, attendance, onClose, onUpdateAttendance }
                 <h4>Individual Dogs ({groupDogsByHousehold(dogs).individualDogs.length} dogs)</h4>
               </div>
               {groupDogsByHousehold(dogs).individualDogs.map(dog => (
-                <div key={dog.id} className="attendance-row">
-                  <div className="dog-info">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData[dog.id]?.attending || false}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], attending: e.target.checked }
-                        }))}
-                      />
+                <div key={dog.id} className="attendance-row-inline">
+                  <div className="dog-info-inline">
+                    <input
+                      type="checkbox"
+                      checked={formData[dog.id]?.attending || false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], attending: e.target.checked }
+                      }))}
+                    />
+                    <span className="dog-name">
                       <strong>{dog.name}</strong> ({dog.owner})
-                    </label>
+                    </span>
                   </div>
-                  {formData[dog.id]?.attending && (
-                    <div className="attendance-details">
-                      <input
-                        type="time"
-                        placeholder="Drop-off"
-                        value={formData[dog.id]?.dropOffTime || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], dropOffTime: e.target.value }
-                        }))}
-                        className="input time-input"
-                      />
-                      <input
-                        type="time"
-                        placeholder="Pick-up"
-                        value={formData[dog.id]?.pickUpTime || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], pickUpTime: e.target.value }
-                        }))}
-                        className="input time-input"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Notes"
-                        value={formData[dog.id]?.notes || ''}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [dog.id]: { ...prev[dog.id], notes: e.target.value }
-                        }))}
-                        className="input notes-input"
-                      />
-                    </div>
-                  )}
+                  <div className="attendance-details-inline">
+                    <input
+                      type="time"
+                      placeholder="Drop-off"
+                      value={formData[dog.id]?.dropOffTime || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], dropOffTime: e.target.value }
+                      }))}
+                      className="input time-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
+                    <input
+                      type="time"
+                      placeholder="Pick-up"
+                      value={formData[dog.id]?.pickUpTime || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], pickUpTime: e.target.value }
+                      }))}
+                      className="input time-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Notes"
+                      value={formData[dog.id]?.notes || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [dog.id]: { ...prev[dog.id], notes: e.target.value }
+                      }))}
+                      className="input notes-input-inline"
+                      disabled={!formData[dog.id]?.attending}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
