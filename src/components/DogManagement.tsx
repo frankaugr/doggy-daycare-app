@@ -144,22 +144,35 @@ export default function DogManagement({
         householdId = crypto.randomUUID();
       }
       
+      console.log('Dog form submission:', {
+        name: formData.name,
+        create_household: formData.create_household,
+        original_household_id: formData.household_id,
+        final_household_id: householdId,
+        is_editing: !!editingDog
+      });
+      
       if (editingDog) {
+        const { create_household, ...formDataWithoutCreateHousehold } = formData;
         await onUpdateDog({
           ...editingDog,
-          ...formData,
+          ...formDataWithoutCreateHousehold,
           vaccine_date: formData.vaccine_date || undefined,
           household_id: householdId || undefined
         });
       } else {
-        await onAddDog({
-          ...formData,
+        const { create_household, ...dogDataWithoutCreateHousehold } = formData;
+        const dogDataToSend = {
+          ...dogDataWithoutCreateHousehold,
           vaccine_date: formData.vaccine_date || undefined,
           household_id: householdId || undefined
-        });
+        };
+        console.log('Sending to onAddDog:', dogDataToSend);
+        await onAddDog(dogDataToSend);
       }
       resetForm();
     } catch (error) {
+      console.error('Failed to save dog:', error);
       alert('Failed to save dog. Please try again.');
     }
   };
@@ -408,28 +421,6 @@ export default function DogManagement({
                           </label>
                         ))}
                       </div>
-                      <div className="time-fields">
-                        <input
-                          type="time"
-                          placeholder="Drop-off time"
-                          value={formData.schedule.daycare_drop_off || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            schedule: { ...formData.schedule, daycare_drop_off: e.target.value }
-                          })}
-                          className="input time-input"
-                        />
-                        <input
-                          type="time"
-                          placeholder="Pick-up time"
-                          value={formData.schedule.daycare_pick_up || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            schedule: { ...formData.schedule, daycare_pick_up: e.target.value }
-                          })}
-                          className="input time-input"
-                        />
-                      </div>
                     </div>
 
                     {/* Training Schedule */}
@@ -458,28 +449,6 @@ export default function DogManagement({
                             {day}
                           </label>
                         ))}
-                      </div>
-                      <div className="time-fields">
-                        <input
-                          type="time"
-                          placeholder="Session start"
-                          value={formData.schedule.training_drop_off || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            schedule: { ...formData.schedule, training_drop_off: e.target.value }
-                          })}
-                          className="input time-input"
-                        />
-                        <input
-                          type="time"
-                          placeholder="Session end"
-                          value={formData.schedule.training_pick_up || ''}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            schedule: { ...formData.schedule, training_pick_up: e.target.value }
-                          })}
-                          className="input time-input"
-                        />
                       </div>
                     </div>
 

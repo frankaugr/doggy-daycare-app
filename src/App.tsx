@@ -142,6 +142,7 @@ function App() {
     loadDogs();
     loadSettings();
     
+    
     return () => {
       cloudBackupService.stopConnectivityMonitoring();
     };
@@ -167,28 +168,24 @@ function App() {
 
   const addDog = async (dogData: Omit<Dog, 'id' | 'created_at'>) => {
     try {
+      console.log('App.addDog received dogData:', dogData);
       // Clean up schedule data - convert empty strings to null for optional fields
-      const cleanSchedule = {
-        ...dogData.schedule,
-        daycare_drop_off: dogData.schedule.daycare_drop_off || null,
-        daycare_pick_up: dogData.schedule.daycare_pick_up || null,
-        training_drop_off: dogData.schedule.training_drop_off || null,
-        training_pick_up: dogData.schedule.training_pick_up || null,
-        start_date: dogData.schedule.start_date || null,
-        end_date: dogData.schedule.end_date || null,
-      };
 
-      await invoke('add_dog', {
+      console.log('App.addDog calling backend with household_id:', dogData.household_id);
+
+      const invokeParams = {
         name: dogData.name,
         owner: dogData.owner,
         phone: dogData.phone,
         email: dogData.email,
         breed: dogData.breed,
-        date_of_birth: dogData.date_of_birth || null,
-        vaccine_date: dogData.vaccine_date || null,
-        schedule: cleanSchedule,
-        household_id: dogData.household_id || null,
-      });
+        dateOfBirth: dogData.date_of_birth || null,
+        vaccineDate: dogData.vaccine_date || null,
+        schedule: dogData.schedule || null,
+        householdId: dogData.household_id || '',
+      };
+      console.log('Exact invoke params:', JSON.stringify(invokeParams, null, 2));
+      await invoke('add_dog', invokeParams);
       loadDogs();
     } catch (error) {
       console.error('Failed to add dog:', error);

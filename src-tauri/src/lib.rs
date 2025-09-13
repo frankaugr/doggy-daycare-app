@@ -492,7 +492,9 @@ fn generate_schedules_for_dog(data: &mut AppData, dog: &Dog) -> Result<(), Strin
     }
     
     let today = Utc::now().date_naive().format("%Y-%m-%d").to_string();
-    let start_date = dog.schedule.start_date.as_ref().unwrap_or(&today);
+    let start_date = dog.schedule.start_date.as_ref()
+        .filter(|s| !s.is_empty())  // Filter out empty strings
+        .unwrap_or(&today);
     
     // Generate daycare schedule
     if !dog.schedule.daycare_days.is_empty() {
@@ -510,7 +512,7 @@ fn generate_schedules_for_dog(data: &mut AppData, dog: &Dog) -> Result<(), Strin
         };
         data.recurring_schedules.push(schedule);
     }
-    
+
     // Generate training schedule
     if !dog.schedule.training_days.is_empty() {
         let schedule = RecurringSchedule {
@@ -702,26 +704,9 @@ fn get_attendance_for_date(date: String) -> Result<HashMap<String, AttendanceEnt
     let data = load_app_data()?;
     
     if let Some(day_data) = data.daily_data.get(&date) {
-        let mut entries = day_data.attendance.entries.clone();
-        
-        // Ensure legacy attendance is represented in entries for calendar display
-        for (dog_id, attending) in &day_data.attendance.dogs {
-            let entry_key = format!("{}_Daycare", dog_id);
-            if !entries.contains_key(&entry_key) {
-                // This is from legacy system, add it as daycare entry
-                let record = day_data.records.get(dog_id);
-                entries.insert(entry_key, AttendanceEntry {
-                    dog_id: dog_id.clone(),
-                    service_type: ServiceType::Daycare,
-                    attending: *attending,
-                    drop_off_time: record.and_then(|r| r.drop_off_time.clone()),
-                    pick_up_time: record.and_then(|r| r.pick_up_time.clone()),
-                    notes: Some("From daily checklist".to_string()),
-                });
-            }
-        }
-        
-        Ok(entries)
+        // Return only the modern attendance entries, no legacy data injection
+        // This ensures all views see the same consistent data
+        Ok(day_data.attendance.entries.clone())
     } else {
         Ok(HashMap::new())
     }
@@ -791,7 +776,7 @@ fn generate_recurring_attendance_internal(data: &mut AppData, start_date: &str, 
         .map_err(|_| "Invalid start date format".to_string())?;
     let end = NaiveDate::parse_from_str(end_date, "%Y-%m-%d")
         .map_err(|_| "Invalid end date format".to_string())?;
-    
+
     let mut current_date = start;
     
     while current_date <= end {
@@ -803,23 +788,33 @@ fn generate_recurring_attendance_internal(data: &mut AppData, start_date: &str, 
             }
             
             let schedule_start = NaiveDate::parse_from_str(&schedule.start_date, "%Y-%m-%d")
-                .map_err(|_| "Invalid schedule start date".to_string())?;
+                .map_err(|e| {
+                    println!("Failed to parse schedule start date '{}': {}", schedule.start_date, e);
+                    format!("Invalid schedule start date '{}': {}", schedule.start_date, e)
+                })?;
             
             if current_date < schedule_start {
                 continue;
             }
             
             if let Some(ref end_date_str) = schedule.end_date {
-                let schedule_end = NaiveDate::parse_from_str(end_date_str, "%Y-%m-%d")
-                    .map_err(|_| "Invalid schedule end date".to_string())?;
-                if current_date > schedule_end {
-                    continue;
+                if !end_date_str.is_empty() {
+                    let schedule_end = NaiveDate::parse_from_str(end_date_str, "%Y-%m-%d")
+                        .map_err(|e| {
+                            println!("Failed to parse schedule end date '{}': {}", end_date_str, e);
+                            format!("Invalid schedule end date '{}': {}", end_date_str, e)
+                        })?;
+                    if current_date > schedule_end {
+                        continue;
+                    }
                 }
             }
             
             // Use robust attendance calculation
             let should_attend = should_generate_attendance(current_date, schedule_start, &schedule.pattern);
-            
+            println!("Date {}, Dog {}, Service {:?}: should_attend = {}",
+                    date_str, schedule.dog_id, schedule.service_type, should_attend);
+
             if should_attend {
                 let day_data = data.daily_data.entry(date_str.clone()).or_insert_with(|| DayData {
                     attendance: DayAttendance { 
@@ -836,13 +831,14 @@ fn generate_recurring_attendance_internal(data: &mut AppData, start_date: &str, 
                 
                 // Only add if not already exists (don't override manual entries)
                 if !day_data.attendance.entries.contains_key(&entry_key) {
+                    println!("Creating attendance entry for {} on {}", entry_key, date_str);
                     let entry = AttendanceEntry {
                         dog_id: schedule.dog_id.clone(),
                         service_type: schedule.service_type.clone(),
-                        attending: true,
+                        attending: true,  // Auto-attend for scheduled dogs
                         drop_off_time: schedule.drop_off_time.clone(),
                         pick_up_time: schedule.pick_up_time.clone(),
-                        notes: Some("Auto-generated from recurring schedule".to_string()),
+                        notes: Some("Auto-scheduled".to_string()),
                     };
                     
                     day_data.attendance.entries.insert(entry_key, entry);
@@ -887,6 +883,26 @@ fn generate_recurring_attendance(start_date: String, end_date: String) -> Result
     Ok(())
 }
 
+#[tauri::command]
+fn clear_auto_generated_attendance() -> Result<(), String> {
+    let mut data = load_app_data()?;
+    
+    for (_date, day_data) in data.daily_data.iter_mut() {
+        // Remove entries that were auto-generated from schedules
+        day_data.attendance.entries.retain(|_, entry| {
+            // Keep entries that don't have auto-generated notes
+            !entry.notes.as_ref().map_or(false, |n|
+                n.contains("Auto-generated") ||
+                n.contains("Scheduled (not confirmed)") ||
+                n.contains("Auto-scheduled")
+            )
+        });
+    }
+    
+    save_app_data(&data)?;
+    Ok(())
+}
+
 fn save_app_data(data: &AppData) -> Result<(), String> {
     let path = get_app_data_path()?;
     
@@ -912,15 +928,43 @@ fn get_all_dogs() -> Result<Vec<Dog>, String> {
 }
 
 #[tauri::command]
-fn add_dog(name: String, owner: String, phone: String, email: String, breed: String, date_of_birth: Option<String>, vaccine_date: Option<String>, schedule: Option<DogSchedule>, household_id: Option<String>) -> Result<Dog, String> {
+fn test_household_id(household_id: Option<String>) -> Result<String, String> {
+    println!("test_household_id received: {:?}", household_id);
+    Ok(format!("Received: {:?}", household_id))
+}
+
+#[tauri::command]
+fn test_parameter_names(household_id: Option<String>, family_id: Option<String>, group_id: Option<String>) -> Result<String, String> {
+    println!("test_parameter_names received:");
+    println!("  household_id: {:?}", household_id);
+    println!("  family_id: {:?}", family_id);
+    println!("  group_id: {:?}", group_id);
+    Ok(format!("household_id: {:?}, family_id: {:?}, group_id: {:?}", household_id, family_id, group_id))
+}
+
+#[tauri::command]
+fn add_dog(name: String, owner: String, phone: String, email: String, breed: String, dateOfBirth: Option<String>, vaccineDate: Option<String>, schedule: Option<DogSchedule>, householdId: String) -> Result<Dog, String> {
+    println!("Backend add_dog called with:");
+    println!("  name: {:?}", name);
+    println!("  owner: {:?}", owner);
+    println!("  phone: {:?}", phone);
+    println!("  email: {:?}", email);
+    println!("  breed: {:?}", breed);
+    println!("  dateOfBirth: {:?}", dateOfBirth);
+    println!("  vaccineDate: {:?}", vaccineDate);
+    println!("  schedule: {:?}", schedule.as_ref().map(|_| "Some(DogSchedule)"));
+    println!("  householdId: {:?}", householdId);
     let mut data = load_app_data()?;
     
     let dog_schedule = schedule.unwrap_or_default();
     let has_schedule = dog_schedule.active && (
-        !dog_schedule.daycare_days.is_empty() || 
-        !dog_schedule.training_days.is_empty() || 
+        !dog_schedule.daycare_days.is_empty() ||
+        !dog_schedule.training_days.is_empty() ||
         !dog_schedule.boarding_days.is_empty()
     );
+
+    println!("Dog schedule: active={}, daycare_days={:?}, has_schedule={}",
+             dog_schedule.active, dog_schedule.daycare_days, has_schedule);
     
     let dog = Dog {
         id: Uuid::new_v4().to_string(),
@@ -929,43 +973,58 @@ fn add_dog(name: String, owner: String, phone: String, email: String, breed: Str
         phone,
         email,
         breed,
-        date_of_birth,
-        vaccine_date,
+        date_of_birth: dateOfBirth,
+        vaccine_date: vaccineDate,
         consent_last_signed: None,
         created_at: Utc::now(),
         schedule: dog_schedule,
-        household_id,
+        household_id: if householdId.is_empty() { None } else { Some(householdId) },
     };
-    
     data.dogs.push(dog.clone());
     
     // Auto-generate recurring schedules for this dog
     if has_schedule {
+        println!("Creating recurring schedules for dog {}", dog.name);
+        let schedules_before = data.recurring_schedules.len();
         generate_schedules_for_dog(&mut data, &dog)?;
+        let schedules_after = data.recurring_schedules.len();
+        println!("Schedules created: {} -> {} (+{})", schedules_before, schedules_after, schedules_after - schedules_before);
         
         // Generate attendance for the dog's schedule period
         let today = Utc::now().date_naive();
         let start_date_for_generation = if let Some(ref schedule_start) = dog.schedule.start_date {
-            // Use the earlier of today or schedule start
-            let schedule_start_date = NaiveDate::parse_from_str(schedule_start, "%Y-%m-%d")
-                .unwrap_or(today);
-            std::cmp::min(today, schedule_start_date)
+            if schedule_start.is_empty() {
+                today
+            } else {
+                // Use the earlier of today or schedule start
+                let schedule_start_date = NaiveDate::parse_from_str(schedule_start, "%Y-%m-%d")
+                    .unwrap_or(today);
+                std::cmp::min(today, schedule_start_date)
+            }
         } else {
             today
         };
         
         let end_date_for_generation = if let Some(ref schedule_end) = dog.schedule.end_date {
-            // Use schedule end date, but at least 30 days from today
-            let schedule_end_date = NaiveDate::parse_from_str(schedule_end, "%Y-%m-%d")
-                .unwrap_or(today + chrono::Duration::days(30));
-            std::cmp::max(today + chrono::Duration::days(30), schedule_end_date)
+            if schedule_end.is_empty() {
+                today + chrono::Duration::days(30)
+            } else {
+                // Use schedule end date, but at least 30 days from today
+                let schedule_end_date = NaiveDate::parse_from_str(schedule_end, "%Y-%m-%d")
+                    .unwrap_or(today + chrono::Duration::days(30));
+                std::cmp::max(today + chrono::Duration::days(30), schedule_end_date)
+            }
         } else {
             today + chrono::Duration::days(30)
         };
         
-        generate_recurring_attendance_internal(&mut data, &start_date_for_generation.format("%Y-%m-%d").to_string(), &end_date_for_generation.format("%Y-%m-%d").to_string())?;
+        let start_str = start_date_for_generation.format("%Y-%m-%d").to_string();
+        let end_str = end_date_for_generation.format("%Y-%m-%d").to_string();
+        println!("Generating attendance from {} to {} for {} schedules", start_str, end_str, data.recurring_schedules.len());
+        generate_recurring_attendance_internal(&mut data, &start_str, &end_str)?;
+        println!("Finished generating attendance");
     }
-    
+
     save_app_data(&data)?;
     
     Ok(dog)
@@ -1013,24 +1072,34 @@ fn update_dog(dog: Dog) -> Result<(), String> {
         // Generate attendance for the dog's schedule period
         let today = Utc::now().date_naive();
         let start_date_for_generation = if let Some(ref schedule_start) = dog.schedule.start_date {
-            // Use the earlier of today or schedule start
-            let schedule_start_date = NaiveDate::parse_from_str(schedule_start, "%Y-%m-%d")
-                .unwrap_or(today);
-            std::cmp::min(today, schedule_start_date)
+            if schedule_start.is_empty() {
+                today
+            } else {
+                // Use the earlier of today or schedule start
+                let schedule_start_date = NaiveDate::parse_from_str(schedule_start, "%Y-%m-%d")
+                    .unwrap_or(today);
+                std::cmp::min(today, schedule_start_date)
+            }
         } else {
             today
         };
         
         let end_date_for_generation = if let Some(ref schedule_end) = dog.schedule.end_date {
-            // Use schedule end date, but at least 30 days from today
-            let schedule_end_date = NaiveDate::parse_from_str(schedule_end, "%Y-%m-%d")
-                .unwrap_or(today + chrono::Duration::days(30));
-            std::cmp::max(today + chrono::Duration::days(30), schedule_end_date)
+            if schedule_end.is_empty() {
+                today + chrono::Duration::days(30)
+            } else {
+                // Use schedule end date, but at least 30 days from today
+                let schedule_end_date = NaiveDate::parse_from_str(schedule_end, "%Y-%m-%d")
+                    .unwrap_or(today + chrono::Duration::days(30));
+                std::cmp::max(today + chrono::Duration::days(30), schedule_end_date)
+            }
         } else {
             today + chrono::Duration::days(30)
         };
         
-        generate_recurring_attendance_internal(&mut data, &start_date_for_generation.format("%Y-%m-%d").to_string(), &end_date_for_generation.format("%Y-%m-%d").to_string())?;
+        let start_str = start_date_for_generation.format("%Y-%m-%d").to_string();
+        let end_str = end_date_for_generation.format("%Y-%m-%d").to_string();
+        generate_recurring_attendance_internal(&mut data, &start_str, &end_str)?;
         
         save_app_data(&data)?;
         Ok(())
@@ -1403,7 +1472,10 @@ pub fn run() {
             delete_recurring_schedule,
             update_detailed_attendance,
             get_attendance_for_date,
-            generate_recurring_attendance
+            generate_recurring_attendance,
+            clear_auto_generated_attendance,
+            test_household_id,
+            test_parameter_names
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

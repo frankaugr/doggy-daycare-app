@@ -236,14 +236,6 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
     householdDogs.forEach(dog => updateAttendanceType(dog.id, attendanceType));
   };
 
-  const removeFromHousehold = async (dogId: string, householdId: string) => {
-    const householdDogs = dogs.filter(dog => dog.household_id === householdId);
-    const targetDog = householdDogs.find(dog => dog.id === dogId);
-    
-    if (targetDog && getAttendanceType(dogId) !== AttendanceType.NotAttending) {
-      await updateAttendanceType(dogId, AttendanceType.NotAttending, true); // Skip household sync
-    }
-  };
 
   const applyGlobalTimes = async () => {
     for (const dog of attendingDogs) {
@@ -337,15 +329,6 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
                   <div key={dog.id} className="attendance-item">
                     <div className="dog-name-container">
                       <span className="dog-name">{dog.name}</span>
-                      {attendanceType !== AttendanceType.NotAttending && (
-                        <button
-                          className="btn-icon btn-danger btn-xs"
-                          onClick={() => removeFromHousehold(dog.id, householdId)}
-                          title="Remove this dog from household attendance"
-                        >
-                          ✗
-                        </button>
-                      )}
                     </div>
                     <select
                       value={attendanceType}
