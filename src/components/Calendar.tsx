@@ -30,8 +30,11 @@ function CalendarDayComponent({ day, onDayClick, loadAttendanceForDate, dogs }: 
 
   useEffect(() => {
     const loadData = async () => {
-      if (!day.isCurrentMonth) return; // Don't load data for other months
-      
+      if (!day.isCurrentMonth) {
+        setDayAttendance({});
+        return;
+      }
+
       try {
         const attendance = await loadAttendanceForDate(day.date);
         setDayAttendance(attendance);
@@ -328,9 +331,9 @@ export default function Calendar({ dogs }: CalendarProps) {
         </div>
         
         <div className="calendar-days">
-          {calendarDays.map((day, index) => (
+          {calendarDays.map((day) => (
             <CalendarDayComponent
-              key={index}
+              key={`${formatDateString(day.date)}-${day.isCurrentMonth}`}
               day={day}
               onDayClick={handleDayClick}
               loadAttendanceForDate={loadAttendanceForDate}
