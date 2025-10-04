@@ -144,13 +144,15 @@ export default function DogManagement({
         householdId = crypto.randomUUID();
       }
       
-      console.log('Dog form submission:', {
-        name: formData.name,
-        create_household: formData.create_household,
-        original_household_id: formData.household_id,
-        final_household_id: householdId,
-        is_editing: !!editingDog
-      });
+      if (import.meta.env.DEV) {
+        console.log('Dog form submission:', {
+          name: formData.name,
+          create_household: formData.create_household,
+          original_household_id: formData.household_id,
+          final_household_id: householdId,
+          is_editing: !!editingDog
+        });
+      }
       
       if (editingDog) {
         const { create_household, ...formDataWithoutCreateHousehold } = formData;
@@ -167,7 +169,9 @@ export default function DogManagement({
           vaccine_date: formData.vaccine_date || undefined,
           household_id: householdId || undefined
         };
-        console.log('Sending to onAddDog:', dogDataToSend);
+        if (import.meta.env.DEV) {
+          console.log('Sending to onAddDog:', dogDataToSend);
+        }
         await onAddDog(dogDataToSend);
       }
       resetForm();

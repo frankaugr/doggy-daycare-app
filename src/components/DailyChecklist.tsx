@@ -76,27 +76,24 @@ export default function DailyChecklist({ dogs }: DailyChecklistProps) {
   };
 
   const getAttendanceType = (dogId: string): AttendanceType => {
-    // Check unified attendance data first (primary source)
+    // Prefer the explicit type recorded in backend when available
+    const explicitType = dayData?.attendance.types?.[dogId];
+    if (explicitType) {
+      return explicitType;
+    }
+
+    // Fallback to unified attendance data
     const entryKey = `${dogId}_Daycare`;
     const attendanceEntry = attendanceEntries[entryKey];
-    
+
     if (attendanceEntry?.attending) {
-      // Check for half-day indicator in notes
-      if (attendanceEntry.notes?.includes('Half-day')) {
-        return AttendanceType.HalfDay;
-      }
       return AttendanceType.FullDay;
     }
-    
-    // Fall back to legacy format if unified data doesn't exist
-    if (dayData?.attendance.types?.[dogId]) {
-      return dayData.attendance.types[dogId];
-    }
-    
+
     if (dayData?.attendance.dogs[dogId]) {
       return AttendanceType.FullDay;
     }
-    
+
     return AttendanceType.NotAttending;
   };
 

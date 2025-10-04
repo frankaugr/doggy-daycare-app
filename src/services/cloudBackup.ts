@@ -121,7 +121,9 @@ class CloudBackupService {
 
   public async performAutoSync(): Promise<void> {
     if (!this.connectionStatus.online) {
-      console.log('Cannot sync: offline');
+      if (import.meta.env.DEV) {
+        console.log('Cannot sync: offline');
+      }
       return;
     }
 

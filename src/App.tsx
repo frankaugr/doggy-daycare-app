@@ -168,11 +168,6 @@ function App() {
 
   const addDog = async (dogData: Omit<Dog, 'id' | 'created_at'>) => {
     try {
-      console.log('App.addDog received dogData:', dogData);
-      // Clean up schedule data - convert empty strings to null for optional fields
-
-      console.log('App.addDog calling backend with household_id:', dogData.household_id);
-
       const invokeParams = {
         name: dogData.name,
         owner: dogData.owner,
@@ -184,7 +179,11 @@ function App() {
         schedule: dogData.schedule || null,
         householdId: dogData.household_id || '',
       };
-      console.log('Exact invoke params:', JSON.stringify(invokeParams, null, 2));
+
+      if (import.meta.env.DEV) {
+        // Helpful during development to inspect payload cross-platform
+        console.log('App.addDog invoke params:', invokeParams);
+      }
       await invoke('add_dog', invokeParams);
       loadDogs();
     } catch (error) {
