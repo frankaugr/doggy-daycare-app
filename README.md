@@ -192,6 +192,43 @@ npm run tauri build
 - Rust 1.70+
 - Platform-specific dependencies for Tauri
 
+### iOS Simulator Setup
+
+1. Install Xcode (with Command Line Tools) from the Mac App Store and launch it once to accept the license.
+2. Install the Rust toolchain targets required by Tauri:
+   ```bash
+   rustup target add aarch64-apple-ios-sim aarch64-apple-ios
+   ```
+3. Install npm dependencies and the Tauri CLI if you have not already:
+   ```bash
+   npm install
+   npm install --global @tauri-apps/cli
+   ```
+4. Generate the iOS project scaffolding (creates `src-tauri/gen/apple` and an Xcode workspace):
+   ```bash
+   npm run ios:init
+   ```
+5. Launch the generated workspace in Xcode and pick the desired simulator:
+   ```bash
+   npm run ios:open
+   ```
+6. To iterate quickly with hot reload, run the iOS development server which will build the Rust side and attach to the selected simulator:
+   ```bash
+   npm run ios:dev
+   ```
+   If you want to drive the run from within Xcode, start the same command with the `--open` flag and keep that terminal tab running before pressing **Run** in Xcode:
+   ```bash
+   npm run ios:dev -- --open
+   ```
+   (This seeds the Tauri dev server so the generated `Build Rust Code` phase can locate the simulator bridge file. Without it Xcode will report `failed to read missing addr file ...app-server-addr`.)
+
+7. When you tweak any settings inside `src-tauri/gen/apple/project.yml`, regenerate the workspace with:
+   ```bash
+   npm run ios:xcodegen
+   ```
+
+The `ios:build` script (`npm run ios:build`) produces a signed `.app` or `.ipa` when you are ready to distribute to devices. For simulator testing you can rely on `ios:dev` or run the build directly inside Xcode after selecting an iPhone or iPad simulator target.
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

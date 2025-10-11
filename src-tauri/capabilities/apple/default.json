@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/apple-schema.json",
+  "identifier": "apple-default",
+  "description": "Baseline capability profile for Apple platforms",
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}
